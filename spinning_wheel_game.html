@@ -1,0 +1,2109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinning Wheel Team Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-toggle-container {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        .admin-toggle-container label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .game-section {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        
+        .slot-container {
+            flex: 1;
+            min-width: 470px; /* Adjusted for wider slot machine */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        
+        .slot-machine {
+            width: 470px; /* CHANGE 2: Wider by 70px */
+            height: 200px;
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border-radius: 20px;
+            position: relative;
+            margin-bottom: 30px;
+            box-shadow: 
+                inset 0 0 0 4px #ecf0f1,
+                0 10px 30px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+        }
+        
+        .slot-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            bottom: 20px;
+            background: #000;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+        
+        .slot-text {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            transition: all 0.1s ease;
+            padding: 20px;
+            border-radius: 10px;
+            min-width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Color coding for different option types */
+        .good-option {
+            background: linear-gradient(45deg, #2ecc71, #27ae60);
+            color: white;
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.6);
+        }
+        
+        .bad-option {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.6);
+        }
+        
+        .neutral-option {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            color: white;
+            box-shadow: 0 0 30px rgba(243, 156, 18, 0.6);
+        }
+        
+        .special-option {
+            background: linear-gradient(45deg, #9b59b6, #8e44ad);
+            color: white;
+            box-shadow: 0 0 30px rgba(155, 89, 182, 0.6);
+        }
+        
+        .jackpot-option {
+            background: linear-gradient(45deg, #f1c40f, #f39c12);
+            color: #2c3e50;
+            box-shadow: 0 0 30px rgba(241, 196, 15, 0.8);
+            animation: jackpot-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes jackpot-glow {
+            0% { box-shadow: 0 0 30px rgba(241, 196, 15, 0.8); }
+            100% { box-shadow: 0 0 50px rgba(241, 196, 15, 1), 0 0 70px rgba(241, 196, 15, 0.8); }
+        }
+        
+        .slot-lights {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 25px;
+            background: linear-gradient(45deg, #f1c40f, #e74c3c, #9b59b6, #3498db);
+            background-size: 300% 300%;
+            animation: rainbow-lights 3s ease infinite;
+            z-index: -1;
+            opacity: 0;
+        }
+        
+        .slot-lights.active {
+            opacity: 1;
+        }
+        
+        @keyframes rainbow-lights {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .spin-button {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 20px 50px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(231, 76, 60, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .spin-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(231, 76, 60, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .spin-button:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        .spin-button:disabled {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 0 2px 10px rgba(149, 165, 166, 0.4);
+        }
+        
+        .teams-section {
+            width: 100%;
+            max-width: 1000px; /* CHANGE 3: Increased width from 800px to 1000px */
+        }
+        
+        .team-management {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #dee2e6;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .team-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            transform: scale(1.02);
+        }
+        
+        .add-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+        }
+        
+        .teams-list {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px; /* Added margin to separate from input */
+        }
+        
+        .team-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            min-width: 150px;
+        }
+        
+        .team-item:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.15);
+        }
+        
+        .team-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .team-points {
+            font-size: 18px;
+            color: #27ae60;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .team-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        
+        .remove-btn, .minus-btn, .add-points-btn {
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .view-players-btn {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .view-players-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 10px rgba(23, 162, 184, 0.4);
+        }
+        
+        .remove-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        
+        .remove-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 10px rgba(231, 76, 60, 0.4);
+        }
+        
+        .minus-btn {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+        
+        .minus-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 10px rgba(243, 156, 18, 0.4);
+        }
+        
+        .add-points-btn {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+        
+        .add-points-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 10px rgba(39, 174, 96, 0.4);
+        }
+        
+        .result-section {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .result {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: linear-gradient(45deg, #ecf0f1, #bdc3c7);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .current-spin-info {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #dee2e6;
+            margin: 10px 0;
+            font-size: 16px;
+            color: #495057;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 8% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal h3 {
+            color: #e74c3c;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .modal-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .modal-btn {
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.confirm-btn {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+        }
+        .modal-btn.confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .modal-btn.danger-btn {
+             background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+        .modal-btn.danger-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+        }
+
+        .modal-btn.cancel-btn {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            margin-top: 10px;
+        }
+        .modal-btn.cancel-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.4);
+        }
+        
+        @media (max-width: 768px) {
+            .game-section {
+                flex-direction: column;
+            }
+            
+            .slot-machine {
+                width: 100%;
+                min-width: 300px;
+            }
+            
+            .slot-text {
+                font-size: 2rem;
+            }
+            
+            .slot-container {
+                min-width: 300px;
+            }
+        }
+		
+		.question-section {
+			background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+			padding: 20px;
+			border-radius: 15px;
+			margin-top: 30px; /* Added margin */
+			border: 2px solid #dee2e6;
+			box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+		}
+
+		.file-input-group {
+			display: flex;
+			gap: 15px;
+			margin-bottom: 20px;
+			flex-wrap: wrap;
+		}
+
+		.file-input-wrapper {
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.browse-btn {
+			background: linear-gradient(45deg, #6c757d, #5a6268);
+			color: white;
+			border: none;
+			padding: 12px 20px;
+			border-radius: 8px;
+			cursor: pointer;
+			font-weight: bold;
+			transition: all 0.3s ease;
+		}
+
+		.browse-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+		}
+
+		.next-question-btn {
+			background: linear-gradient(45deg, #17a2b8, #138496);
+			color: white;
+			border: none;
+			padding: 20px 50px;
+			border-radius: 50px;
+			font-size: 20px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			box-shadow: 
+				0 6px 20px rgba(23, 162, 184, 0.4),
+				inset 0 1px 0 rgba(255, 255, 255, 0.2);
+			text-transform: uppercase;
+			letter-spacing: 2px;
+		}
+
+		.next-question-btn:hover {
+			transform: translateY(-3px) scale(1.05);
+			box-shadow: 
+				0 8px 25px rgba(23, 162, 184, 0.6),
+				inset 0 1px 0 rgba(255, 255, 255, 0.2);
+		}
+
+		.next-question-btn:disabled {
+			background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+			cursor: not-allowed;
+			transform: none;
+			box-shadow: 0 2px 10px rgba(149, 165, 166, 0.4);
+		}
+
+		.fullscreen-question {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+			z-index: 2000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+		}
+
+		.fullscreen-question-content {
+			background: rgba(255, 255, 255, 0.95);
+			border-radius: 20px;
+			padding: 40px;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+			max-width: 800px;
+			width: 100%;
+			max-height: 90vh;
+			overflow-y: auto;
+		}
+
+		.fullscreen-question-text {
+			font-size: 2rem;
+			font-weight: bold;
+			margin-bottom: 30px;
+			color: #2c3e50;
+			text-align: center;
+		}
+
+		.fullscreen-option {
+			padding: 15px 20px;
+			font-size: 1.3em;
+			color: #495057;
+			background: white;
+			border: 2px solid #dee2e6;
+			border-radius: 10px;
+			margin: 10px 0;
+			transition: all 0.3s ease;
+		}
+
+		.fullscreen-option.correct {
+			color: white;
+			background: linear-gradient(45deg, #27ae60, #2ecc71);
+			border-color: #27ae60;
+			box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+		}
+
+		.fullscreen-controls {
+			display: flex;
+			gap: 20px;
+			justify-content: center;
+			margin-top: 40px;
+		}
+
+		.fullscreen-btn {
+			background: linear-gradient(45deg, #28a745, #20c997);
+			color: white;
+			border: none;
+			padding: 15px 30px;
+			border-radius: 50px;
+			cursor: pointer;
+			font-weight: bold;
+			font-size: 18px;
+			transition: all 0.3s ease;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+
+		.fullscreen-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+		}
+
+		.fullscreen-btn.close-btn {
+			background: linear-gradient(45deg, #6c757d, #5a6268);
+		}
+
+		.fullscreen-btn.close-btn:hover {
+			box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+		}
+
+		.current-player-display {
+			background: linear-gradient(45deg, #17a2b8, #138496);
+			color: white;
+			padding: 20px;
+			border-radius: 15px;
+			margin-bottom: 30px;
+			text-align: center;
+			font-size: 1.5em;
+			font-weight: bold;
+			box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+		}
+
+		.team-item.active-team {
+			border-color: #007bff;
+			background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+			transform: scale(1.05);
+			box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+		}
+
+		.player-indicator {
+			font-size: 0.9em;
+			color: #6c757d;
+			margin-top: 5px;
+		}
+
+		.spin-controls {
+			display: flex;
+			gap: 20px;
+			align-items: center;
+			justify-content: center;
+		}
+        
+        .player-list {
+            list-style: none;
+            padding: 10px 0 0 0;
+            margin-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            width: 100%;
+            min-height: 20px; /* Drop area for empty teams */
+        }
+
+        .player-list li {
+            padding: 5px 8px;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            cursor: move;
+            transition: all 0.2s ease;
+            color: #495057;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-list li:hover {
+            background-color: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        .team-item.drag-over {
+            border: 2px dashed #007bff;
+            background-color: #e3f2fd;
+        }
+
+        .player-details {
+            margin-top: 10px;
+            width: 100%;
+        }
+        .player-details summary {
+            cursor: pointer;
+            font-weight: bold;
+            padding: 5px;
+            border-radius: 5px;
+            background-color: #f1f1f1;
+            transition: background-color 0.2s;
+            text-align: center;
+            color: #495057;
+        }
+        .player-details summary:hover {
+            background-color: #e2e6ea;
+        }
+        .player-details[open] summary {
+             border-bottom-left-radius: 0;
+             border-bottom-right-radius: 0;
+        }
+        .player-details .player-list {
+            margin-top: 0;
+            border-top: none;
+            padding: 5px;
+            border: 1px solid #f1f1f1;
+            border-top: none;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+        }
+
+        .delete-player-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            line-height: 22px;
+            text-align: center;
+            flex-shrink: 0;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .delete-player-btn:hover {
+            background-color: #e74c3c;
+            color: white;
+        }
+				
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎡 Spinning Wheel Team Game</h1>
+
+        <div class="result-section">
+            <div class="result" id="result">Spin the wheel to get started!</div>
+            <div class="current-spin-info" id="currentSpinInfo">
+                Last spin: <strong id="lastSpinText">None</strong> 
+                | Points available: <strong id="lastSpinPoints">0</strong>
+                | <span id="doubleStatus"></span>
+            </div>
+        </div>
+
+        <div class="admin-toggle-container">
+            <label for="adminMode">Admin Mode:</label>
+            <input type="checkbox" id="adminMode" onchange="toggleAdminPanel()">
+        </div>
+    
+        <div id="adminPanel" style="display: none; background: #e9ecef; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #dee2e6;">
+            <h3 style="text-align: center; margin-bottom: 15px; color: #495057;">Admin Controls</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold;">
+                <button id="resetChancesBtn" class="add-btn" style="background: #6c757d;">Reset to Defaults</button>
+                <div>Total Chance: <span id="totalChance">100</span>%</div>
+            </div>
+            <div id="adminControlsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <!-- Controls will be populated by JS -->
+            </div>
+        </div>
+		
+        <div class="game-section">
+            <div class="slot-container">
+                <div class="slot-machine">
+                    <div class="slot-lights" id="slotLights"></div>
+                    <div class="slot-display">
+                        <div class="slot-text" id="slotText">Ready to Spin!</div>
+                    </div>
+                </div>
+                <div class="spin-controls">
+				<button class="spin-button" id="spinBtn" onclick="spinSlot()">
+					🎡 SPIN THE WHEEL!
+				</button>
+				<button class="next-question-btn" id="nextQuestionBtn" onclick="startNextQuestion()" style="display: none;">
+					📝 NEXT QUESTION
+				</button>
+            </div>
+            
+            <div class="teams-section" style="margin-top: 30px;">
+                <div class="team-management">
+                    <h3 style="margin-bottom: 15px; color: #495057;">Team Management</h3>
+                    
+                    <div class="teams-list" id="teamsList"></div>
+                    <div class="team-input">
+                        <input type="text" id="teamName" placeholder="Enter team name..." maxlength="20">
+                        <button class="add-btn" onclick="addTeam()">Add Team</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="question-section">
+			<h3 style="margin-bottom: 15px; color: #495057;">Question & Player Management</h3>
+			
+			<div class="file-input-group">
+				<div class="file-input-wrapper">
+					<input type="file" id="questionsFile" accept=".txt" style="display: none;" onchange="loadQuestions(event)">
+					<button class="browse-btn" onclick="document.getElementById('questionsFile').click()">
+						Browse for Questions
+					</button>
+					<small style="color: #6c757d;">Load questions from a text file</small>
+				</div>
+				
+				<div class="file-input-wrapper">
+					<input type="file" id="playersFile" accept=".txt" style="display: none;" onchange="loadPlayers(event)">
+					<button class="browse-btn" onclick="document.getElementById('playersFile').click()">
+						Browse for Players
+					</button>
+					<small style="color: #6c757d;">Load player names from a text file</small>
+				</div>
+				
+				<!-- CHANGE 1: Toggle for multiple choice options -->
+				<div class="file-input-wrapper">
+					<label for="toggleOptions" style="display: flex; align-items: center; gap: 8px; font-weight: bold; color: #495057; height: 45px;">
+						Show Multiple Choice
+						<input type="checkbox" id="toggleOptions" checked>
+					</label>
+					<small style="color: #6c757d;">Toggle visibility of options</small>
+				</div>
+			</div>
+			
+			<div id="questionStatus" style="text-align: center; color: #6c757d; padding: 10px;">
+				No questions loaded
+			</div>
+		</div>
+        
+        <!-- Modals -->
+        <div id="fittyFittyModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #e74c3c;">💸 FITTY-FITTY!</h3>
+                <p>Choose which team loses half of their points:</p>
+                <div class="modal-options" id="fittyFittyOptions"></div>
+                <button class="modal-btn cancel-btn" onclick="closeModal('fittyFittyModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="stealModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #9b59b6;">💰 STEAL!</h3>
+                <p>Choose a team to steal 1/5 of their points from:</p>
+                <div class="modal-options" id="stealOptions"></div>
+                <button class="modal-btn cancel-btn" onclick="closeModal('stealModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="mysteryModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #f39c12;">❓ MYSTERY</h3>
+                <p>Choose your fate! One button gives you points, the other takes them away...</p>
+                <div class="modal-options">
+                    <button class="modal-btn confirm-btn" onclick="resolveMystery()">Green</button>
+                    <button class="modal-btn danger-btn" onclick="resolveMystery()">Red</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="rollbackModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #3498db;">⏪ ROLLBACK</h3>
+                <p>Choose a team to undo their last action:</p>
+                <div class="modal-options" id="rollbackOptions"></div>
+                <button class="modal-btn cancel-btn" onclick="closeModal('rollbackModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="collectorModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #9b59b6;">Collector's Choice</h3>
+                <p>Choose an action:</p>
+                <div class="modal-options" id="collectorOptions"></div>
+                <button class="modal-btn cancel-btn" onclick="closeModal('collectorModal')">Cancel</button>
+            </div>
+        </div>
+
+        <div id="dejaVuModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #9b59b6;">🔮 Déjà Vu!</h3>
+                <p>Team <strong id="dejaVuTeamName"></strong> must answer a previous question!</p>
+                <div id="dejaVuQuestion" style="margin: 20px 0; font-size: 1.2rem; font-weight: bold; padding: 15px; background: #f1f1f1; border-radius: 10px;">
+                    <!-- Question text will be injected here -->
+                </div>
+                <div id="dejaVuAnswer" style="display: none; margin: 15px 0; font-size: 1.1rem; padding: 15px; background: #d4edda; border-radius: 10px; color: #155724; border: 1px solid #c3e6cb;">
+                    <!-- Answer will be injected here -->
+                </div>
+                <p>Did they get it right?</p>
+                <div class="modal-options" id="dejaVuOptions">
+                    <!-- Correct/Incorrect buttons will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<div id="fullscreenQuestion" class="fullscreen-question" style="display: none;">
+		<div class="fullscreen-question-content">
+			<div id="fullscreenCurrentPlayer" class="current-player-display" style="display: none;">
+				Current Player: <span id="fullscreenPlayerName">None</span>
+			</div>
+			
+			<div id="fullscreenQuestionContent">
+				<!-- Question content will be populated here -->
+			</div>
+			
+			<div class="fullscreen-controls">
+				<button class="fullscreen-btn" id="fullscreenNextBtn" onclick="nextQuestionStep()">Show Answer</button>
+				<button class="fullscreen-btn close-btn" onclick="closeFullscreenQuestion()">Close</button>
+			</div>
+		</div>
+	</div>
+
+<script>
+    let teams = [];
+    let lastSpinResult = { points: 0, text: "None" };
+    let isSpinning = false;
+    let isDoubleActive = false;
+    let highBeamsActive = false;
+    let coveredQuestions = [];
+    
+    const slotOptions = [
+		{ text: "100", points: 100, type: "good", chance: 6 },
+		{ text: "200", points: 200, type: "good", chance: 6 },
+		{ text: "300", points: 300, type: "good", chance: 6 },
+		{ text: "400", points: 400, type: "good", chance: 6 },
+		{ text: "500", points: 500, type: "jackpot", chance: 6 },
+		{ text: "LOSE 100", points: -100, type: "bad", chance: 4 },
+		{ text: "LOSE 200", points: -200, type: "bad", chance: 4 },
+		{ text: "SPIN AGAIN", points: 0, type: "neutral", special: "spin_again", chance: 5 },
+		{ text: "LOSE TURN", points: 0, type: "bad", special: "lose_turn", chance: 4 },
+		{ text: "FITTY-FITTY", points: 0, type: "bad", special: "fitty-fitty", chance: 4 },
+		{ text: "DOUBLE", points: 0, type: "special", special: "double", chance: 5 },
+		{ text: "STEAL", points: 0, type: "special", special: "steal", chance: 5 },
+		{ text: "MYSTERY", points: 0, type: "special", special: "mystery", chance: 5 },
+		{ text: "ROLLBACK", points: 100, type: "special", special: "rollback", chance: 5 },
+        { text: "SKIP", points: 100, type: "special", special: "skip_turn", chance: 4 },
+        { text: "HIGH-BEAMS", points: 100, type: "special", special: "high_beams", chance: 4 },
+        { text: "COLLECTOR", points: 0, type: "special", special: "collector", chance: 4 },
+        { text: "LANDOWNER", points: 0, type: "special", special: "landowner", chance: 4 },
+        { text: "DEJA VU", points: 100, type: "special", special: "deja_vu", chance: 4 },
+	];
+
+
+    function loadChancesFromLocalStorage() {
+        const savedChances = JSON.parse(localStorage.getItem('spinningWheelChances'));
+        if (savedChances && savedChances.length === slotOptions.length) {
+            slotOptions.forEach((option, index) => {
+                option.chance = savedChances[index];
+            });
+        }
+    }
+    
+    function saveChancesToLocalStorage() {
+        const chancesToSave = slotOptions.map(option => option.chance);
+        localStorage.setItem('spinningWheelChances', JSON.stringify(chancesToSave));
+    }
+    
+	// Sound effect for spinning - improved version with error handling
+	let audioContext = null;
+	let isAudioInitialized = false;
+
+	function initializeAudio() {
+		if (!audioContext) {
+			try {
+				audioContext = new (window.AudioContext || window.webkitAudioContext)();
+				isAudioInitialized = true;
+			} catch (error) {
+				console.log('Audio not supported');
+				isAudioInitialized = false;
+			}
+		}
+		
+		// Resume context if it's suspended (browser requirement)
+		if (audioContext && audioContext.state === 'suspended') {
+			audioContext.resume();
+		}
+	}
+
+	function playTickSound() {
+		if (!isAudioInitialized) {
+			initializeAudio();
+		}
+		
+		if (!audioContext || audioContext.state === 'closed') {
+			return; // Skip if audio isn't available
+		}
+		
+		try {
+			const oscillator = audioContext.createOscillator();
+			const gainNode = audioContext.createGain();
+			
+			oscillator.connect(gainNode);
+			gainNode.connect(audioContext.destination);
+			
+			oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+			oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.05);
+			
+			gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+			gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+			
+			oscillator.start(audioContext.currentTime);
+			oscillator.stop(audioContext.currentTime + 0.05);
+		} catch (error) {
+			// Silently fail if audio doesn't work
+			console.log('Audio playback failed');
+		}
+	}
+	
+    function getOptionClass(option) {
+        switch(option.type) {
+            case 'good': return 'good-option';
+            case 'bad': return 'bad-option';
+            case 'neutral': return 'neutral-option';
+            case 'special': return 'special-option';
+            case 'jackpot': return 'jackpot-option';
+            default: return 'neutral-option';
+        }
+    }
+    
+    function addTeam() {
+        const teamNameInput = document.getElementById('teamName');
+        const teamName = teamNameInput.value.trim();
+        if (teamName && !teams.find(team => team.name === teamName)) {
+            teams.push({ name: teamName, points: 0, lastAction: null, players: [] });
+            teamNameInput.value = '';
+            updateTeamsList();
+        }
+    }
+    
+    function removeTeam(index) {
+        teams.splice(index, 1);
+        updateTeamsList();
+    }
+    
+    function subtractPoints(index) {
+        if (teams[index].points > 0) {
+            const pointsToSubtract = Math.min(teams[index].points, 50);
+            teams[index].lastAction = { type: 'subtract', amount: pointsToSubtract };
+            teams[index].points -= pointsToSubtract;
+            updateTeamsList();
+        }
+    }
+    
+    function addPointsToTeam(index) {
+        if (lastSpinResult.special === 'steal') {
+            showStealModal(index);
+            return;
+        }
+        if (lastSpinResult.special === 'collector') {
+            showCollectorModal(index);
+            return;
+        }
+        if (lastSpinResult.special === 'landowner') {
+            executeGlobalLandowner(index);
+            return;
+        }
+
+        if (lastSpinResult.points !== 0) {
+            let pointsToAdd = lastSpinResult.points;
+            if (isDoubleActive) {
+                pointsToAdd *= 2;
+                isDoubleActive = false; // Reset after use
+            }
+            teams[index].lastAction = { type: 'add', amount: pointsToAdd };
+            teams[index].points += pointsToAdd;
+
+            if (lastSpinResult.special === 'deja_vu') {
+                triggerDejaVu(index);
+            }
+            
+            lastSpinResult = { points: 0, text: "None" }; // Reset spin after points are awarded
+            updateTeamsList();
+            updateLastSpinInfo();
+            
+            // Visual feedback
+            const teamItem = document.querySelectorAll('.team-item')[index];
+            teamItem.style.background = pointsToAdd > 0 ? 'linear-gradient(45deg, #d4edda, #c3e6cb)' : 'linear-gradient(45deg, #f8d7da, #f5c6cb)';
+            setTimeout(() => {
+                teamItem.style.background = 'white';
+            }, 1000);
+        }
+    }
+
+    function showTeamPlayers(teamIndex, event) {
+        event.stopPropagation(); // Prevent other click events on the team card
+        const team = teams[teamIndex];
+        if (team && team.players && team.players.length > 0) {
+            alert(`Players on ${team.name}:\n\n- ${team.players.join('\n- ')}`);
+        } else {
+            alert(`No players have been assigned to ${team.name}.`);
+        }
+    }
+    
+    function updateTeamsList() {
+        const teamsList = document.getElementById('teamsList');
+        teamsList.innerHTML = '';
+        
+        const canAddPoints = lastSpinResult.points !== 0 || ['steal', 'collector', 'landowner'].includes(lastSpinResult.special);
+        teams.forEach((team, index) => {
+            const teamItem = document.createElement('div');
+            teamItem.className = `team-item ${activeTeamIndex === index ? 'active-team' : ''}`;
+			
+            if (questionMode) {
+                teamItem.style.cursor = 'pointer';
+                teamItem.onclick = () => selectTeamForQuestion(index);
+            } else {
+                // MODIFICATION: Removed the onclick handler that cycled through players.
+                // This allows the user to click on the expandable player list without
+                // unintentionally changing the "Next" player.
+                teamItem.style.cursor = 'default';
+                teamItem.onclick = null;
+            }
+			
+			// Removed the playersInfo section that displayed "Next: Player Name"
+			let playersInfo = '';
+			// No longer showing the next player indicator
+
+            let playerListHtml = '';
+            if (team.players && team.players.length > 0) {
+                playerListHtml += `<details class="player-details"><summary>Players (${team.players.length})</summary>`;
+                playerListHtml += '<ul class="player-list">';
+                team.players.forEach(player => {
+                    const sanitizedPlayerForAttr = player.replace(/"/g, '&quot;');
+                    const sanitizedPlayerForJs = player.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    
+                    playerListHtml += `<li draggable="true" ondragstart="drag(event)" data-player-name="${sanitizedPlayerForAttr}" data-team-index="${index}">
+                        <span>${player}</span>
+                        <button class="delete-player-btn" onclick="deletePlayer(${index}, '${sanitizedPlayerForJs}'); event.stopPropagation();" title="Delete Player">×</button>
+                    </li>`;
+                });
+                playerListHtml += '</ul></details>';
+            }
+            
+            teamItem.innerHTML = `
+                <span class="team-name">${team.name}</span>
+                <span class="team-points">${team.points} pts</span>
+                ${playersInfo}
+                <div class="team-actions">
+                    <button class="add-points-btn" onclick="addPointsToTeam(${index}); event.stopPropagation();" title="Apply spin result to this team" ${!canAddPoints ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>+</button>
+                    <button class="minus-btn" onclick="subtractPoints(${index}); event.stopPropagation();" title="Subtract 50 points">−</button>
+                    <button class="remove-btn" onclick="removeTeam(${index}); event.stopPropagation();" title="Remove team">×</button>
+                </div>
+                ${playerListHtml}
+            `;
+
+            teamItem.ondragover = (event) => {
+                event.preventDefault();
+                document.querySelectorAll('.team-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+                teamItem.classList.add('drag-over');
+            };
+            teamItem.ondragleave = () => {
+                teamItem.classList.remove('drag-over');
+            };
+            teamItem.ondrop = (event) => {
+                teamItem.classList.remove('drag-over');
+                drop(event, index);
+            };
+
+            teamsList.appendChild(teamItem);
+        });
+    }
+
+    function drag(event) {
+        event.dataTransfer.setData("playerName", event.target.dataset.playerName);
+        event.dataTransfer.setData("sourceTeamIndex", event.target.dataset.teamIndex);
+        setTimeout(() => {
+            event.target.style.opacity = '0.5';
+        }, 0);
+
+        document.body.addEventListener('dragend', () => {
+            event.target.style.opacity = '1';
+            document.querySelectorAll('.team-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }, { once: true });
+    }
+
+    function drop(event, targetTeamIndex) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const playerName = event.dataTransfer.getData("playerName");
+        const sourceTeamIndex = parseInt(event.dataTransfer.getData("sourceTeamIndex"), 10);
+        
+        if (sourceTeamIndex !== targetTeamIndex && !isNaN(sourceTeamIndex)) {
+            const sourceTeam = teams[sourceTeamIndex];
+            const playerIndexInSource = sourceTeam.players.indexOf(playerName);
+            
+            if (playerIndexInSource > -1) {
+                sourceTeam.players.splice(playerIndexInSource, 1);
+                
+                const targetTeam = teams[targetTeamIndex];
+                if (!targetTeam.players) {
+                    targetTeam.players = [];
+                }
+                targetTeam.players.push(playerName);
+                
+                teamPlayerIndex[sourceTeamIndex] = 0;
+                teamPlayerIndex[targetTeamIndex] = 0;
+
+                updateTeamsList();
+            }
+        }
+    }
+
+    function deletePlayer(teamIndex, playerName) {
+        const team = teams[teamIndex];
+        if (team && team.players) {
+            const playerIndex = team.players.indexOf(playerName);
+            if (playerIndex > -1) {
+                team.players.splice(playerIndex, 1);
+                
+                if (teamPlayerIndex[teamIndex] >= team.players.length) {
+                    teamPlayerIndex[teamIndex] = 0;
+                }
+                
+                updateTeamsList();
+            }
+        }
+    }
+
+
+    function getWeightedRandomOption() {
+        const totalWeight = slotOptions.reduce((sum, option) => sum + (option.chance || 0), 0);
+        if (totalWeight <= 0) {
+            return slotOptions[Math.floor(Math.random() * slotOptions.length)];
+        }
+        
+        let random = Math.random() * totalWeight;
+        
+        for (const option of slotOptions) {
+            if (option.chance > 0) {
+                random -= option.chance;
+                if (random <= 0) {
+                    return option;
+                }
+            }
+        }
+        return slotOptions[slotOptions.length - 1];
+    }
+    
+    function spinSlot() {
+        if (isSpinning) return;
+        
+        isSpinning = true;
+        const spinBtn = document.getElementById('spinBtn');
+        const slotText = document.getElementById('slotText');
+        const slotLights = document.getElementById('slotLights');
+        
+        spinBtn.disabled = true;
+		initializeAudio();
+        slotLights.classList.add('active');
+        lastSpinResult = { points: 0, text: "Spinning..." };
+        updateLastSpinInfo();
+        updateTeamsList();
+
+        let spinCount = 0;
+        const maxSpins = 30 + Math.floor(Math.random() * 20);
+        const finalResult = { ...getWeightedRandomOption() };
+        
+        const spinInterval = () => {
+            if (spinCount < maxSpins) {
+                playTickSound();
+                const randomOption = slotOptions[Math.floor(Math.random() * slotOptions.length)];
+                slotText.textContent = randomOption.text;
+                slotText.className = `slot-text ${getOptionClass(randomOption)}`;
+                spinCount++;
+                const delay = 50 + Math.pow(spinCount / maxSpins, 2) * 200;
+                setTimeout(spinInterval, delay);
+            } else {
+                slotText.textContent = finalResult.text;
+                slotText.className = `slot-text ${getOptionClass(finalResult)}`;
+                
+                setTimeout(() => {
+                    slotLights.classList.remove('active');
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    
+                    lastSpinResult = finalResult;
+                    handleSpecialResult(finalResult);
+                    updateLastSpinInfo();
+                    updateTeamsList();
+                }, 1000);
+            }
+        };
+        
+        spinInterval();
+    }
+    
+    function handleSpecialResult(result) {
+        const resultDiv = document.getElementById('result');
+        let autoSpin = false;
+
+        switch(result.special) {
+            case 'fitty-fitty':
+                if (teams.some(t => t.points > 0)) {
+                    showFittyFittyModal();
+                    resultDiv.innerHTML = '💸 Fitty-Fitty! Choose a team to lose half of their points!';
+                } else {
+                    resultDiv.innerHTML = '💸 Fitty-Fitty! No teams to apply this to!';
+                }
+                break;
+            case 'spin_again':
+                resultDiv.innerHTML = '🔄 SPIN AGAIN! Here we go again!';
+                autoSpin = true;
+                break;
+            case 'skip_turn':
+                resultDiv.innerHTML = '⏭️ SKIP! The next team skips their turn.';
+                break;
+            case 'lose_turn':
+                resultDiv.innerHTML = '⏭️ LOSE A TURN! Next player\'s turn!';
+                break;
+            case 'double':
+                isDoubleActive = true;
+                resultDiv.innerHTML = '✨ DOUBLE! Your next point gain will be doubled!';
+                break;
+            case 'steal':
+                resultDiv.innerHTML = '💰 STEAL! Click the `+` on your team to choose a victim.';
+                break;
+            case 'mystery':
+                resultDiv.innerHTML = '❓ MYSTERY! A choice must be made...';
+                showMysteryModal();
+                break;
+            case 'rollback':
+                resultDiv.innerHTML = '⏪ ROLLBACK! Choose a team to undo their last action.';
+                if (teams.some(t => t.lastAction)) {
+                    showRollbackModal();
+                } else {
+                    resultDiv.innerHTML = '⏪ ROLLBACK! But no actions have been taken yet!';
+                }
+                break;
+            case 'high_beams':
+                highBeamsActive = true;
+                resultDiv.innerHTML = '😎 HIGH-BEAMS! The next team to answer a question will not see the multiple choice options!';
+                break;
+            case 'collector':
+                resultDiv.innerHTML = '🤔 COLLECTOR! Click the `+` on your team to make a choice.';
+                break;
+            case 'landowner':
+                resultDiv.innerHTML = '🏡 LANDOWNER! Click the `+` on your team to collect rent from everyone!';
+                break;
+            case 'deja_vu':
+                resultDiv.innerHTML = '🔮 Déjà Vu! The rolling team gets 100 points. After awarding them, another team will face a random question!';
+                break;
+            default:
+                resultDiv.innerHTML = `🎯 You landed on <strong>${result.text}!</strong>`;
+        }
+
+        if(autoSpin) {
+            setTimeout(() => { if (!isSpinning) spinSlot(); }, 2000);
+        }
+    }
+
+    function updateLastSpinInfo() {
+        document.getElementById('lastSpinText').textContent = lastSpinResult.text;
+        document.getElementById('lastSpinPoints').textContent = lastSpinResult.points;
+        const doubleStatus = document.getElementById('doubleStatus');
+        doubleStatus.textContent = isDoubleActive ? 'Double is ACTIVE!' : '';
+        doubleStatus.style.color = isDoubleActive ? '#9b59b6' : 'inherit';
+        doubleStatus.style.fontWeight = isDoubleActive ? 'bold' : 'normal';
+    }
+
+    // --- MODAL LOGIC ---
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    function showFittyFittyModal() {
+        const modal = document.getElementById('fittyFittyModal');
+        const options = document.getElementById('fittyFittyOptions');
+        options.innerHTML = '';
+        
+        teams.forEach((team, index) => {
+            if (team.points > 0) {
+                const button = document.createElement('button');
+                button.className = 'modal-btn danger-btn';
+                button.textContent = `${team.name} (${team.points} points)`;
+                button.onclick = () => fittyFittyTeam(index);
+                options.appendChild(button);
+            }
+        });
+        
+        if (options.children.length > 0) modal.style.display = 'block';
+    }
+    
+    function fittyFittyTeam(index) {
+        const previousPoints = teams[index].points;
+        const pointsLost = teams[index].points - Math.floor(teams[index].points / 2);
+        teams[index].lastAction = { type: 'fitty-fitty', previousPoints: previousPoints };
+        teams[index].points = Math.floor(teams[index].points / 2);
+        updateTeamsList();
+        closeModal('fittyFittyModal');
+        document.getElementById('result').innerHTML = `💸 ${teams[index].name} has lost ${pointsLost} points!`;
+    }
+
+    function showStealModal(stealerIndex) {
+        const modal = document.getElementById('stealModal');
+        const options = document.getElementById('stealOptions');
+        options.innerHTML = '';
+
+        teams.forEach((team, index) => {
+            if (index !== stealerIndex && team.points > 0) {
+                const button = document.createElement('button');
+                button.className = 'modal-btn danger-btn';
+                button.textContent = `Steal from ${team.name} (${team.points} pts)`;
+                button.onclick = () => executeSteal(index, stealerIndex);
+                options.appendChild(button);
+            }
+        });
+
+        if (options.children.length > 0) {
+            modal.style.display = 'block';
+        } else {
+            document.getElementById('result').innerHTML = '💰 STEAL! But no other teams have points to steal!';
+            lastSpinResult = { points: 0, text: "None" };
+            updateLastSpinInfo();
+            updateTeamsList();
+        }
+    }
+
+    function executeSteal(victimIndex, stealerIndex) {
+        const pointsToSteal = Math.floor(teams[victimIndex].points / 5);
+        
+        teams[victimIndex].lastAction = { type: 'stolen_from', amount: pointsToSteal, stealer: teams[stealerIndex].name };
+        teams[stealerIndex].lastAction = { type: 'stole_from', amount: pointsToSteal, victim: teams[victimIndex].name };
+
+        teams[victimIndex].points -= pointsToSteal;
+        teams[stealerIndex].points += pointsToSteal;
+
+        closeModal('stealModal');
+        document.getElementById('result').innerHTML = `💰 ${teams[stealerIndex].name} stole ${pointsToSteal} points from ${teams[victimIndex].name}!`;
+        lastSpinResult = { points: 0, text: "None" };
+        updateTeamsList();
+        updateLastSpinInfo();
+    }
+
+    function showMysteryModal() {
+        document.getElementById('mysteryModal').style.display = 'block';
+    }
+
+    function resolveMystery() {
+        // Randomly decide the outcome, regardless of the button pressed
+        const isGoodOutcome = Math.random() < 0.5;
+
+        if (isGoodOutcome) {
+            lastSpinResult = { text: "MYSTERY (Gain 300)", points: 300, type: 'good' };
+        } else {
+            lastSpinResult = { text: "MYSTERY (Lose 300)", points: -300, type: 'bad' };
+        }
+        closeModal('mysteryModal');
+        document.getElementById('result').innerHTML = `❓ Mystery resolved! You got <strong>${lastSpinResult.text}</strong>!`;
+        updateLastSpinInfo();
+        updateTeamsList();
+    }
+    
+    function showRollbackModal() {
+        const modal = document.getElementById('rollbackModal');
+        const options = document.getElementById('rollbackOptions');
+        options.innerHTML = '';
+
+        teams.forEach((team, index) => {
+            if (team.lastAction) {
+                const button = document.createElement('button');
+                button.className = 'modal-btn confirm-btn';
+                button.textContent = `Undo ${team.name}'s last action`;
+                button.onclick = () => executeRollback(index);
+                options.appendChild(button);
+            }
+        });
+        modal.style.display = 'block';
+    }
+
+    function executeRollback(teamIndex) {
+        const team = teams[teamIndex];
+        const action = team.lastAction;
+        if (!action) return;
+
+        let resultMessage = `⏪ ${team.name}'s last action has been undone!`;
+
+        switch(action.type) {
+            case 'add':
+                team.points -= action.amount;
+                break;
+            case 'subtract':
+                team.points += action.amount;
+                break;
+            case 'fitty-fitty':
+                team.points = action.previousPoints;
+                break;
+            case 'stole_from': // Rolling back the stealer
+                {
+                    const victim = teams.find(t => t.name === action.victim);
+                    if (victim) victim.points += action.amount;
+                    team.points -= action.amount;
+                }
+                break;
+            case 'stolen_from': // Rolling back the victim
+                {
+                    const stealer = teams.find(t => t.name === action.stealer);
+                    if (stealer) stealer.points -= action.amount;
+                    team.points += action.amount;
+                }
+                break;
+            case 'collect': // Collector collected 100 points
+                team.points -= action.amount;
+                break;
+            case 'drain': // Collector drained 200 from a victim
+                {
+                    const victim = teams.find(t => t.name === action.victim);
+                    if (victim) victim.points += action.amount;
+                }
+                break;
+            case 'drained': // Victim was drained of 200
+                team.points += action.amount;
+                break;
+            case 'collected_rent': // Landowner collected rent from all
+                team.points -= action.amount;
+                // Note: This is best undone by rolling back the teams that *paid* rent.
+                break;
+            case 'paid_rent': // Team paid rent to a landowner
+                {
+                    const landowner = teams.find(t => t.name === action.to);
+                    if (landowner) landowner.points -= action.amount;
+                    team.points += action.amount;
+                }
+                break;
+        }
+
+        team.lastAction = null; // Prevent double rollback
+        closeModal('rollbackModal');
+        document.getElementById('result').innerHTML = resultMessage;
+        updateTeamsList();
+    }
+
+    function showCollectorModal(collectorIndex) {
+        const modal = document.getElementById('collectorModal');
+        const options = document.getElementById('collectorOptions');
+        options.innerHTML = '';
+
+        const collectBtn = document.createElement('button');
+        collectBtn.className = 'modal-btn confirm-btn';
+        collectBtn.textContent = 'Collect 100 points for yourself';
+        collectBtn.onclick = () => executeCollect(collectorIndex);
+        options.appendChild(collectBtn);
+
+        teams.forEach((team, index) => {
+            if (index !== collectorIndex) {
+                const drainBtn = document.createElement('button');
+                drainBtn.className = 'modal-btn danger-btn';
+                drainBtn.textContent = `Drain 200 from ${team.name} (${team.points} pts)`;
+                drainBtn.onclick = () => executeDrain(index, collectorIndex);
+                options.appendChild(drainBtn);
+            }
+        });
+
+        modal.style.display = 'block';
+    }
+
+    function executeCollect(collectorIndex) {
+        teams[collectorIndex].points += 100;
+        teams[collectorIndex].lastAction = { type: 'collect', amount: 100 };
+        
+        closeModal('collectorModal');
+        document.getElementById('result').innerHTML = `🤑 ${teams[collectorIndex].name} collected 100 points!`;
+        lastSpinResult = { points: 0, text: "None" };
+        updateTeamsList();
+        updateLastSpinInfo();
+    }
+
+    function executeDrain(victimIndex, collectorIndex) {
+        const pointsToDrain = 200; // Drains full 200, allowing negative scores
+        teams[victimIndex].points -= pointsToDrain;
+        
+        teams[victimIndex].lastAction = { type: 'drained', amount: pointsToDrain, by: teams[collectorIndex].name };
+        teams[collectorIndex].lastAction = { type: 'drain', amount: pointsToDrain, victim: teams[victimIndex].name };
+
+        closeModal('collectorModal');
+        document.getElementById('result').innerHTML = `😈 ${teams[collectorIndex].name} drained ${pointsToDrain} points from ${teams[victimIndex].name}!`;
+        lastSpinResult = { points: 0, text: "None" };
+        updateTeamsList();
+        updateLastSpinInfo();
+    }
+
+    function executeGlobalLandowner(landownerIndex) {
+        let totalRentCollected = 0;
+        const teamsPaid = [];
+
+        teams.forEach((team, index) => {
+            if (index !== landownerIndex) {
+                const rent = Math.min(team.points, 100); // Take what they have, up to 100
+                if (rent > 0) {
+                    team.points -= rent;
+                    totalRentCollected += rent;
+                    teamsPaid.push(team.name);
+                    team.lastAction = { type: 'paid_rent', amount: rent, to: teams[landownerIndex].name };
+                }
+            }
+        });
+
+        if (totalRentCollected > 0) {
+            teams[landownerIndex].points += totalRentCollected;
+            teams[landownerIndex].lastAction = { type: 'collected_rent', amount: totalRentCollected, from: 'all other teams' };
+            document.getElementById('result').innerHTML = `🏡 ${teams[landownerIndex].name} collected a total of ${totalRentCollected} points in rent from ${teamsPaid.join(', ')}!`;
+        } else {
+            document.getElementById('result').innerHTML = `🏡 LANDOWNER! But no other teams had points to pay rent!`;
+        }
+
+        lastSpinResult = { points: 0, text: "None" };
+        updateTeamsList();
+        updateLastSpinInfo();
+    }
+
+    // --- DEJA VU LOGIC ---
+    function triggerDejaVu(rollingTeamIndex) {
+        const otherTeams = teams.filter((_, i) => i !== rollingTeamIndex);
+
+        if (otherTeams.length === 0) {
+            alert('Déjà Vu! But there are no other teams to challenge.');
+            return;
+        }
+        if (coveredQuestions.length === 0) {
+            alert('Déjà Vu! But no questions have been covered yet.');
+            return;
+        }
+
+        const chosenTeamIndex = teams.indexOf(otherTeams[Math.floor(Math.random() * otherTeams.length)]);
+        const chosenQuestion = coveredQuestions[Math.floor(Math.random() * coveredQuestions.length)];
+        
+        const modal = document.getElementById('dejaVuModal');
+        document.getElementById('dejaVuTeamName').textContent = teams[chosenTeamIndex].name;
+        document.getElementById('dejaVuQuestion').textContent = chosenQuestion.question;
+
+        const answerDiv = document.getElementById('dejaVuAnswer');
+        const correctAnswerText = chosenQuestion.options[chosenQuestion.correctIndex] || "No correct answer specified.";
+        answerDiv.innerHTML = `<strong>Answer:</strong> ${correctAnswerText}`;
+        answerDiv.style.display = 'none'; // Reset state by hiding it initially
+
+        const optionsDiv = document.getElementById('dejaVuOptions');
+        optionsDiv.innerHTML = '';
+
+        const correctBtn = document.createElement('button');
+        correctBtn.className = 'modal-btn confirm-btn';
+        correctBtn.textContent = 'Correct (+50)';
+        correctBtn.onclick = () => resolveDejaVuAnswer(chosenTeamIndex, true);
+
+        const incorrectBtn = document.createElement('button');
+        incorrectBtn.className = 'modal-btn danger-btn';
+        incorrectBtn.textContent = 'Incorrect (-200)';
+        incorrectBtn.onclick = () => resolveDejaVuAnswer(chosenTeamIndex, false);
+        
+        const showAnswerBtn = document.createElement('button');
+        showAnswerBtn.className = 'modal-btn'; // Neutral style
+        showAnswerBtn.textContent = 'Show Answer';
+        showAnswerBtn.style.background = 'linear-gradient(45deg, #17a2b8, #138496)'; // Make it distinct
+        showAnswerBtn.onclick = () => {
+            answerDiv.style.display = 'block';
+        };
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'modal-btn cancel-btn';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => closeModal('dejaVuModal');
+
+        optionsDiv.appendChild(correctBtn);
+        optionsDiv.appendChild(incorrectBtn);
+        optionsDiv.appendChild(showAnswerBtn);
+        optionsDiv.appendChild(cancelBtn);
+
+        modal.style.display = 'block';
+    }
+
+    function resolveDejaVuAnswer(teamIndex, wasCorrect) {
+        if (wasCorrect) {
+            teams[teamIndex].points += 50;
+        } else {
+            teams[teamIndex].points -= 200;
+        }
+        updateTeamsList();
+        closeModal('dejaVuModal');
+    }
+
+    // --- ADMIN MODE LOGIC ---
+    function toggleAdminPanel() {
+        const adminPanel = document.getElementById('adminPanel');
+        const adminModeCheckbox = document.getElementById('adminMode');
+        adminPanel.style.display = adminModeCheckbox.checked ? 'block' : 'none';
+    }
+
+    function populateAdminControls() {
+        const container = document.getElementById('adminControlsContainer');
+        container.innerHTML = '';
+        slotOptions.forEach((option, index) => {
+            const controlWrapper = document.createElement('div');
+            controlWrapper.style.cssText = 'display:flex; align-items:center; gap:10px; padding:5px; border:1px solid #ccc; border-radius:8px;';
+
+            const button = document.createElement('button');
+            button.textContent = option.text;
+            button.className = `modal-btn ${getOptionClass(option)}`;
+            button.style.flex = '1';
+            button.style.padding = '8px'; // Make button smaller
+            if (option.type === 'jackpot') {
+                button.style.color = '#2c3e50';
+            }
+            button.onclick = () => forceResult(index);
+
+            const chanceInput = document.createElement('input');
+            chanceInput.type = 'number';
+            chanceInput.value = option.chance;
+            chanceInput.min = 0;
+            chanceInput.max = 100;
+            chanceInput.step = '0.1';
+            chanceInput.style.cssText = 'width:70px; padding:8px; border-radius:6px; border: 1px solid #dee2e6;';
+            chanceInput.setAttribute('aria-label', `Chance for ${option.text}`);
+            chanceInput.onchange = (e) => updateChance(index, e.target.value);
+            
+            const percentLabel = document.createElement('span');
+            percentLabel.textContent = '%';
+            
+            controlWrapper.appendChild(button);
+            controlWrapper.appendChild(chanceInput);
+            controlWrapper.appendChild(percentLabel);
+            container.appendChild(controlWrapper);
+        });
+        updateTotalChance();
+    }
+
+    function updateChance(index, value) {
+        const chance = parseFloat(value);
+        if (!isNaN(chance) && chance >= 0) {
+            slotOptions[index].chance = chance;
+            saveChancesToLocalStorage(); // Save settings whenever a chance is updated
+        }
+        updateTotalChance();
+    }
+
+    function updateTotalChance() {
+        const total = slotOptions.reduce((sum, option) => sum + (option.chance || 0), 0);
+        const totalChanceEl = document.getElementById('totalChance');
+        totalChanceEl.textContent = total.toFixed(2);
+        const parentEl = totalChanceEl.parentElement;
+        if (Math.abs(total - 100) > 0.01) { // Use a small tolerance for floating point math
+            parentEl.style.color = '#e74c3c'; // Red
+            parentEl.title = 'Total chance should be 100% for accurate probabilities.';
+        } else {
+            parentEl.style.color = '#27ae60'; // Green
+            parentEl.title = 'Total chance is balanced.';
+        }
+    }
+
+
+    function forceResult(optionIndex) {
+        if (isSpinning) return; // Prevent interference with normal spins
+
+        const result = { ...slotOptions[optionIndex] };
+        const slotText = document.getElementById('slotText');
+        
+        // Immediately display the result in the slot machine
+        slotText.textContent = result.text;
+        slotText.className = `slot-text ${getOptionClass(result)}`;
+        
+        // Update game state and trigger special actions
+        lastSpinResult = result;
+        handleSpecialResult(result);
+        updateLastSpinInfo();
+        updateTeamsList();
+    }
+
+    // Allow Enter key to add teams
+    document.getElementById('teamName').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addTeam();
+        }
+    });
+    
+    // Initialize the game
+    document.addEventListener('DOMContentLoaded', () => {
+        loadChancesFromLocalStorage(); // Load saved chances on startup
+        updateLastSpinInfo();
+        populateAdminControls(); // Set up the admin panel on load
+
+        document.getElementById('resetChancesBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all chances to their default values? This will reload the page.')) {
+                localStorage.removeItem('spinningWheelChances');
+                location.reload();
+            }
+        });
+    });
+	
+	// Question and Player Management
+	let questions = [];
+	let currentQuestionIndex = 0;
+	let showingAnswer = false;
+	let players = [];
+	let teamPlayerIndex = {}; // Track current player index for each team
+	let activeTeamIndex = null;
+	let questionMode = false;
+	let showMultipleChoice = true; // CHANGE 1: Variable for the toggle
+
+	function loadQuestions(event) {
+		const file = event.target.files[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			const text = e.target.result;
+			parseQuestions(text);
+		};
+		reader.readAsText(file);
+	}
+
+	function parseQuestions(text) {
+		questions = [];
+		const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+		
+		let currentQuestion = null;
+		
+		for (let line of lines) {
+			// Check if this is a question (doesn't start with a), b), c), d))
+			if (!line.match(/^[a-d]\)/i)) {
+				// Save previous question if exists
+				if (currentQuestion) {
+					questions.push(currentQuestion);
+				}
+				// Start new question
+				currentQuestion = {
+					question: line,
+					options: [],
+					correctIndex: -1
+				};
+			} else {
+				// This is an option
+				if (currentQuestion) {
+					const isCorrect = line.includes('(Correct)') || line.includes('(correct)');
+					const cleanOption = line.replace(/\(correct\)/gi, '').trim();
+					currentQuestion.options.push(cleanOption);
+					if (isCorrect) {
+						currentQuestion.correctIndex = currentQuestion.options.length - 1;
+					}
+				}
+			}
+		}
+		
+		// Don't forget the last question
+		if (currentQuestion) {
+			questions.push(currentQuestion);
+		}
+		
+		if (questions.length > 0) {
+			currentQuestionIndex = 0;
+			showingAnswer = false;
+			updateQuestionStatus();
+			document.getElementById('nextQuestionBtn').style.display = 'block';
+		}
+	}
+
+	function updateQuestionStatus() {
+		const statusDiv = document.getElementById('questionStatus');
+		if (questions.length > 0) {
+			statusDiv.innerHTML = `${questions.length} questions loaded. Current: ${currentQuestionIndex + 1}/${questions.length}`;
+			statusDiv.style.color = '#27ae60';
+		} else {
+			statusDiv.innerHTML = 'No questions loaded';
+			statusDiv.style.color = '#6c757d';
+		}
+	}
+
+	function loadPlayers(event) {
+		const file = event.target.files[0];
+		if (!file) return;
+
+		const reader = new FileReader();
+		reader.onload = function(e) {
+			const text = e.target.result;
+			parsePlayers(text);
+		};
+		reader.readAsText(file);
+	}
+
+	function parsePlayers(text) {
+		players = text.split('\n').map(line => line.trim()).filter(line => line);
+		assignPlayersToTeams();
+	}
+
+	function assignPlayersToTeams() {
+		if (teams.length === 0 || players.length === 0) return;
+		
+		// Clear existing team assignments
+		teams.forEach(team => {
+			team.players = [];
+		});
+		
+		// CHANGE 2: Shuffle players array for random assignment
+		const shuffledPlayers = [...players];
+		for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1));
+			[shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
+		}
+		
+		// Distribute shuffled players evenly among teams
+		shuffledPlayers.forEach((player, index) => {
+			const teamIndex = index % teams.length;
+			teams[teamIndex].players.push(player);
+		});
+		
+		// Initialize player indices for each team
+		teamPlayerIndex = {};
+		teams.forEach((team, index) => {
+			if (team.players && team.players.length > 0) {
+				teamPlayerIndex[index] = 0; // Start at the first player
+			}
+		});
+		
+		updateTeamsList();
+	}
+
+	function startNextQuestion() {
+		if (questions.length === 0) {
+			alert('No questions loaded!');
+			return;
+		}
+		
+		if (currentQuestionIndex >= questions.length) {
+			alert('All questions completed!');
+			return;
+		}
+		
+		questionMode = true;
+		showingAnswer = false;
+		displayFullscreenQuestion();
+		document.getElementById('fullscreenQuestion').style.display = 'flex';
+	}
+
+	function displayFullscreenQuestion() {
+		if (questions.length === 0) return;
+		
+		const question = questions[currentQuestionIndex];
+		const questionContent = document.getElementById('fullscreenQuestionContent');
+		
+		let html = `
+			<div class="fullscreen-question-text">
+				Question ${currentQuestionIndex + 1} of ${questions.length}
+			</div>
+			<div class="fullscreen-question-text" style="font-size: 1.5rem; margin-bottom: 30px;">
+				${question.question}
+			</div>
+		`;
+		
+        if (showMultipleChoice && !highBeamsActive) {
+            question.options.forEach((option, index) => {
+                const isCorrect = index === question.correctIndex;
+                const showCorrect = showingAnswer && isCorrect;
+                html += `
+                    <div class="fullscreen-option ${showCorrect ? 'correct' : ''}">
+                        ${option}
+                    </div>
+                `;
+            });
+        } else {
+            // If options are hidden, only show the correct answer when revealed
+            if (showingAnswer && question.correctIndex !== -1) {
+                const correctOptionText = question.options[question.correctIndex];
+                html += `
+                    <div class="fullscreen-option correct">
+                        ${correctOptionText}
+                    </div>
+                `;
+            }
+        }
+		
+		questionContent.innerHTML = html;
+		
+		// Update button text
+		const nextBtn = document.getElementById('fullscreenNextBtn');
+		if (showingAnswer) {
+			nextBtn.textContent = currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Questions';
+		} else {
+			nextBtn.textContent = 'Show Answer';
+		}
+		
+		// Show current player if active team is selected
+		const playerDisplay = document.getElementById('fullscreenCurrentPlayer');
+		const playerName = document.getElementById('fullscreenPlayerName');
+		if (activeTeamIndex !== null && teams[activeTeamIndex] && teams[activeTeamIndex].players.length > 0) {
+			const currentPlayerIndex = teamPlayerIndex[activeTeamIndex] || 0;
+			const currentPlayer = teams[activeTeamIndex].players[currentPlayerIndex];
+			playerName.textContent = `${currentPlayer} (${teams[activeTeamIndex].name})`;
+			playerDisplay.style.display = 'block';
+		} else {
+			playerDisplay.style.display = 'none';
+		}
+	}
+
+	function nextQuestionStep() {
+		if (!showingAnswer) {
+			// Show the answer
+			showingAnswer = true;
+			displayFullscreenQuestion();
+            if (highBeamsActive) {
+                highBeamsActive = false; // Turn off high beams after it has been used
+            }
+		} else {
+            // Add the just-finished question to our covered list
+            if (questions[currentQuestionIndex]) {
+                 coveredQuestions.push(questions[currentQuestionIndex]);
+            }
+
+			// Move to next question or finish
+			if (currentQuestionIndex < questions.length - 1) {
+				currentQuestionIndex++;
+				showingAnswer = false;
+				setActiveTeam(null); // Clear active team for next question
+				displayFullscreenQuestion();
+				updateQuestionStatus();
+			} else {
+				// Questions finished
+				questionMode = false;
+				closeFullscreenQuestion();
+				alert('All questions completed! Great job everyone!');
+				// Reset to first question for potential replay
+				currentQuestionIndex = 0;
+				updateQuestionStatus();
+			}
+		}
+	}
+
+	function closeFullscreenQuestion() {
+		document.getElementById('fullscreenQuestion').style.display = 'none';
+		questionMode = false;
+		setActiveTeam(null);
+		updateTeamsList();
+	}
+
+	function selectTeamForQuestion(teamIndex) {
+		if (!questionMode) return;
+		
+		if (!teams[teamIndex].players || teams[teamIndex].players.length === 0) {
+			alert('This team has no players assigned!');
+			return;
+		}
+		
+		// First, set the active team and display who is answering NOW
+		setActiveTeam(teamIndex);
+		displayFullscreenQuestion(); 
+		
+		// CHANGE 1: Now that the current player is selected, cycle to the next one for the future
+		if (teams[teamIndex].players.length > 0) {
+			// Ensure index is initialized before incrementing
+			if (typeof teamPlayerIndex[teamIndex] !== 'number') {
+				teamPlayerIndex[teamIndex] = 0;
+			}
+			teamPlayerIndex[teamIndex] = (teamPlayerIndex[teamIndex] + 1) % teams[teamIndex].players.length;
+		}
+
+		// Update the main list to show the new "Next" player
+		updateTeamsList();
+	}
+
+	function setActiveTeam(teamIndex) {
+		activeTeamIndex = teamIndex;
+		updateTeamsList();
+	}
+
+	// Override original addTeam and removeTeam to handle player reassignment
+	const originalAddTeam = addTeam;
+	addTeam = function() {
+		originalAddTeam();
+		if (players.length > 0) {
+			assignPlayersToTeams();
+		}
+	};
+
+	const originalRemoveTeam = removeTeam;
+	removeTeam = function(index) {
+        // Find the team name before removing it to correctly reassign players
+        const removedTeamName = teams[index].name;
+		originalRemoveTeam(index);
+		if (players.length > 0) {
+			assignPlayersToTeams();
+		}
+		// Clear active team if it was the removed team
+		if (activeTeamIndex === index) {
+			setActiveTeam(null);
+		} else if (activeTeamIndex > index) {
+			activeTeamIndex--;
+		}
+	};
+	
+    // CHANGE 1: Add event listener for the new toggle
+    document.getElementById('toggleOptions').addEventListener('change', function() {
+        showMultipleChoice = this.checked;
+    });
+	
+</script>
+</body>
+</html>
