@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spinning Wheel Team Game</title>
+    <!-- CHANGE: Added Google Font for the timer -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -131,6 +135,12 @@
             background: linear-gradient(45deg, #9b59b6, #8e44ad);
             color: white;
             box-shadow: 0 0 30px rgba(155, 89, 182, 0.6);
+        }
+
+        .blue-option {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            box-shadow: 0 0 30px rgba(52, 152, 219, 0.6);
         }
         
         .jackpot-option {
@@ -556,6 +566,7 @@
 			align-items: center;
 			justify-content: center;
 			padding: 20px;
+			overflow: hidden; 
 		}
 
 		.fullscreen-question-content {
@@ -563,10 +574,13 @@
 			border-radius: 20px;
 			padding: 40px;
 			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-			max-width: 800px;
+			max-width: 1100px; 
 			width: 100%;
 			max-height: 90vh;
 			overflow-y: auto;
+            position: relative; 
+            text-align: center; /* Center timer and question */
+			overflow-x: hidden; /* ADJUSTMENT 2: Prevent timer pulse from creating a scrollbar */
 		}
 
 		.fullscreen-question-text {
@@ -584,16 +598,37 @@
 			background: white;
 			border: 2px solid #dee2e6;
 			border-radius: 10px;
-			margin: 10px 0;
+			margin: 10px auto; /* Centered options */
+            max-width: 80%; /* Prevent options from being too wide */
 			transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: left; /* Align text within option to the left */
 		}
+        .fullscreen-option:hover {
+            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 123, 255, 0.15);
+        }
+        .fullscreen-option.no-click {
+            cursor: default;
+            pointer-events: none; /* Disable further clicks */
+        }
 
 		.fullscreen-option.correct {
 			color: white;
 			background: linear-gradient(45deg, #27ae60, #2ecc71);
 			border-color: #27ae60;
 			box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+            transform: scale(1.02);
 		}
+
+        .fullscreen-option.incorrect {
+			color: white;
+			background: linear-gradient(45deg, #e74c3c, #c0392b);
+			border-color: #c0392b;
+			box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+		}
+
 
 		.fullscreen-controls {
 			display: flex;
@@ -746,7 +781,81 @@
             background-color: #e74c3c;
             color: white;
         }
+
+        /* CHANGE: New urgent timer styles */
+        #questionTimer {
+            font-family: 'Orbitron', monospace;
+            font-size: 4em;
+            font-weight: 900;
+            margin: -10px 0 15px 0;
+            color: #00C853; 
+            text-shadow: 
+                0 0 20px rgba(0, 200, 83, 0.5),
+                0 0 40px rgba(0, 200, 83, 0.3),
+                0 0 60px rgba(0, 200, 83, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        #questionTimer.warning {
+            color: #ff3030;
+            text-shadow: 
+                0 0 20px rgba(255,48,48,0.8),
+                0 0 40px rgba(255,48,48,0.6),
+                0 0 60px rgba(255,48,48,0.4);
+            animation: timerPulse 0.5s infinite;
+        }
+
+        @keyframes timerPulse {
+            0%, 100% { 
+                transform: scale(1);
+                text-shadow: 
+                    0 0 20px rgba(255,48,48,0.8),
+                    0 0 40px rgba(255,48,48,0.6),
+                    0 0 60px rgba(255,48,48,0.4);
+            }
+            50% { 
+                transform: scale(1.1);
+                text-shadow: 
+                    0 0 30px rgba(255,48,48,1),
+                    0 0 60px rgba(255,48,48,0.8),
+                    0 0 90px rgba(255,48,48,0.6);
+            }
+        }
 				
+        /* CHANGE: New styles for format info pop-up */
+        .format-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #dee2e6;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: left;
+            /* ADJUSTMENT 4: Removed pointer-events to allow button clicks */
+        }
+        .format-popup h4 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        .format-popup pre {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -768,9 +877,22 @@
         </div>
     
         <div id="adminPanel" style="display: none; background: #e9ecef; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #dee2e6;">
-            <h3 style="text-align: center; margin-bottom: 15px; color: #495057;">Admin Controls</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold;">
+            <h3 style="text-align: center; margin-bottom: 15px; color: #495057;">Admin Controls & Settings</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; flex-wrap: wrap; gap: 15px;">
                 <button id="resetChancesBtn" class="add-btn" style="background: #6c757d;">Reset to Defaults</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="timerDurationSetting">Timer (s):</label>
+                    <input type="number" id="timerDurationSetting" value="25" min="5" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid #dee2e6;" onchange="updateTimerSetting(this.value)">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                     <label for="timerToggle">Enable Timer</label>
+                    <input type="checkbox" id="timerToggle" onchange="updateTimerEnabled(this.checked)" checked>
+                </div>
+				<!-- ADJUSTMENT 1: Moved checkbox here -->
+				<div style="display: flex; align-items: center; gap: 5px;">
+					<label for="toggleOptions">👁️ Multiple-Choice</label>
+					<input type="checkbox" id="toggleOptions" checked>
+				</div>
                 <div>Total Chance: <span id="totalChance">100</span>%</div>
             </div>
             <div id="adminControlsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
@@ -808,13 +930,14 @@
             </div>
         </div>
         
-        <div class="question-section">
+		 <div class="question-section">
 			<h3 style="margin-bottom: 15px; color: #495057;">Question & Player Management</h3>
 			
 			<div class="file-input-group">
 				<div class="file-input-wrapper">
 					<input type="file" id="questionsFile" accept=".txt" style="display: none;" onchange="loadQuestions(event)">
-					<button class="browse-btn" onclick="document.getElementById('questionsFile').click()">
+					<!-- ADJUSTMENT 4: Changed onclick -->
+					<button class="browse-btn" onclick="showFormatPopup('question')" style="height: 45px; width: 200px; box-sizing: border-box;">
 						Browse for Questions
 					</button>
 					<small style="color: #6c757d;">Load questions from a text file</small>
@@ -822,23 +945,38 @@
 				
 				<div class="file-input-wrapper">
 					<input type="file" id="playersFile" accept=".txt" style="display: none;" onchange="loadPlayers(event)">
-					<button class="browse-btn" onclick="document.getElementById('playersFile').click()">
+					<!-- ADJUSTMENT 4: Changed onclick -->
+					<button class="browse-btn" onclick="showFormatPopup('player')" style="height: 45px; width: 200px; box-sizing: border-box;">
 						Browse for Players
 					</button>
-					<small style="color: #6c757d;">Load player names from a text file</small>
+					<small style="color: #6c757d;">Load players from a text file</small>
 				</div>
-				
-				<!-- CHANGE 1: Toggle for multiple choice options -->
+				<!-- ADJUSTMENT 3: Added Paste button -->
 				<div class="file-input-wrapper">
-					<label for="toggleOptions" style="display: flex; align-items: center; gap: 8px; font-weight: bold; color: #495057; height: 45px;">
-						Show Multiple Choice
-						<input type="checkbox" id="toggleOptions" checked>
-					</label>
-					<small style="color: #6c757d;">Toggle visibility of options</small>
+					<button class="browse-btn" onclick="togglePasteSection()" style="height: 45px; width: 200px; box-sizing: border-box; background: linear-gradient(45deg, #17a2b8, #138496);">
+						Paste from Clipboard
+					</button>
+					<small style="color: #6c757d;">Paste questions/players directly</small>
 				</div>
 			</div>
 			
-			<div id="questionStatus" style="text-align: center; color: #6c757d; padding: 10px;">
+			<!-- ADJUSTMENT 3: Added collapsible paste section -->
+			<div id="pasteSection" style="display: none;">
+				<div class="paste-input-group" style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+					<div class="paste-wrapper">
+						<h4 style="margin-bottom: 10px; color: #495057;">Or Paste Questions Here</h4>
+						<textarea id="questionPasteArea" rows="6" placeholder="What is the capital of France?&#10;a) Berlin&#10;b) Madrid&#10;c) Paris (Correct)&#10;d) Rome" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #dee2e6; font-family: 'Courier New', monospace; resize: vertical;"></textarea>
+						<button class="add-btn" style="margin-top: 10px; width: 100%;" onclick="loadQuestionsFromTextArea()">Load Questions From Text</button>
+					</div>
+					<div class="paste-wrapper">
+						<h4 style="margin-bottom: 10px; color: #495057;">Or Paste Players Here</h4>
+						<textarea id="playerPasteArea" rows="6" placeholder="John Doe&#10;Jane Smith&#10;Peter Jones" style="width: 100%; padding: 10px; border-radius: 8px; border: 2px solid #dee2e6; font-family: 'Courier New', monospace; resize: vertical;"></textarea>
+						<button class="add-btn" style="margin-top: 10px; width: 100%;" onclick="loadPlayersFromTextArea()">Load Players From Text</button>
+					</div>
+				</div>
+			</div>
+
+			<div id="questionStatus" style="text-align: center; color: #6c757d; padding: 10px; margin-top: 15px;">
 				No questions loaded
 			</div>
 		</div>
@@ -907,10 +1045,22 @@
                 </div>
             </div>
         </div>
+
+        <div id="confirmSpinModal" class="modal">
+            <div class="modal-content">
+                <h3 style="color: #f39c12;">Wait a second!</h3>
+                <p style="margin: 20px 0; font-size: 1.1rem;">You still have 100 points available to award from the last spin. Are you sure you want to spin again and forfeit these points?</p>
+                <div class="modal-options">
+                    <button class="modal-btn danger-btn" onclick="proceedWithSpin()">Yes, Forfeit Points & Spin</button>
+                    <button class="modal-btn cancel-btn" onclick="closeModal('confirmSpinModal')">No, I'll Award The Points</button>
+                </div>
+            </div>
+        </div>
     </div>
 	
 	<div id="fullscreenQuestion" class="fullscreen-question" style="display: none;">
 		<div class="fullscreen-question-content">
+            <div id="questionTimer">25</div>
 			<div id="fullscreenCurrentPlayer" class="current-player-display" style="display: none;">
 				Current Player: <span id="fullscreenPlayerName">None</span>
 			</div>
@@ -926,6 +1076,32 @@
 		</div>
 	</div>
 
+    <!-- Format Popups -->
+    <div id="questionFormatPopup" class="format-popup">
+        <h4>Question File Format Example</h4>
+        <pre>What is the capital of France?
+a) Berlin
+b) Madrid
+c) Paris (Correct)
+d) Rome
+
+Which planet is the largest?
+a) Earth
+b) Jupiter (correct)
+c) Mars
+d) Saturn</pre>
+		<!-- ADJUSTMENT 4: Added OK button -->
+		<button class="modal-btn confirm-btn" style="margin-top: 15px; width: 100%;" onclick="acceptAndBrowse('question')">OK</button>
+    </div>
+    <div id="playerFormatPopup" class="format-popup">
+        <h4>Player File Format Example</h4>
+        <pre>John Doe
+Jane Smith
+Peter Jones</pre>
+		<!-- ADJUSTMENT 4: Added OK button -->
+		<button class="modal-btn confirm-btn" style="margin-top: 15px; width: 100%;" onclick="acceptAndBrowse('player')">OK</button>
+    </div>
+
 <script>
     let teams = [];
     let lastSpinResult = { points: 0, text: "None" };
@@ -934,28 +1110,31 @@
     let highBeamsActive = false;
     let coveredQuestions = [];
     
-    const slotOptions = [
-		{ text: "100", points: 100, type: "good", chance: 6 },
-		{ text: "200", points: 200, type: "good", chance: 6 },
-		{ text: "300", points: 300, type: "good", chance: 6 },
-		{ text: "400", points: 400, type: "good", chance: 6 },
-		{ text: "500", points: 500, type: "jackpot", chance: 6 },
-		{ text: "LOSE 100", points: -100, type: "bad", chance: 4 },
-		{ text: "LOSE 200", points: -200, type: "bad", chance: 4 },
-		{ text: "SPIN AGAIN", points: 0, type: "neutral", special: "spin_again", chance: 5 },
-		{ text: "LOSE TURN", points: 0, type: "bad", special: "lose_turn", chance: 4 },
-		{ text: "FITTY-FITTY", points: 0, type: "bad", special: "fitty-fitty", chance: 4 },
-		{ text: "DOUBLE", points: 0, type: "special", special: "double", chance: 5 },
-		{ text: "STEAL", points: 0, type: "special", special: "steal", chance: 5 },
-		{ text: "MYSTERY", points: 0, type: "special", special: "mystery", chance: 5 },
-		{ text: "ROLLBACK", points: 100, type: "special", special: "rollback", chance: 5 },
-        { text: "SKIP", points: 100, type: "special", special: "skip_turn", chance: 4 },
-        { text: "HIGH-BEAMS", points: 100, type: "special", special: "high_beams", chance: 4 },
-        { text: "COLLECTOR", points: 0, type: "special", special: "collector", chance: 4 },
-        { text: "LANDOWNER", points: 0, type: "special", special: "landowner", chance: 4 },
-        { text: "DEJA VU", points: 100, type: "special", special: "deja_vu", chance: 4 },
-	];
+	const slotOptions = [
+		{ text: "100", points: 100, type: "good", chance: 6.0 },
+		{ text: "200", points: 200, type: "good", chance: 6.0 },
+		{ text: "300", points: 300, type: "good", chance: 6.0 },
+		{ text: "400", points: 400, type: "good", chance: 6.0 },
+		{ text: "500", points: 500, type: "jackpot", chance: 6.0 },
 
+		{ text: "LOSE 100", points: -100, type: "bad", chance: 4.0 },
+		{ text: "LOSE 200", points: -200, type: "bad", chance: 4.0 },
+
+		{ text: "SPIN AGAIN", points: 0, type: "neutral", special: "spin_again", chance: 2 },
+		{ text: "LOSE TURN", points: 0, type: "bad", special: "lose_turn", chance: 4.0 },
+		{ text: "FITTY-FITTY", points: 0, type: "bad", special: "fitty-fitty", chance: 3.5 },
+
+		{ text: "DOUBLE", points: 0, type: "special", special: "double", chance: 5.0 },
+		{ text: "STEAL", points: 0, type: "special", special: "steal", chance: 5.5 },
+		{ text: "MYSTERY", points: 0, type: "special", special: "mystery", chance: 5.5 },
+		{ text: "ROLLBACK", points: 100, type: "blue", special: "rollback", chance: 5.0 },
+		{ text: "SKIP", points: 100, type: "blue", special: "skip_turn", chance: 5.0 },
+		{ text: "HIGH-BEAMS", points: 100, type: "blue", special: "high_beams", chance: 5.0 },
+		{ text: "COLLECTOR", points: 0, type: "special", special: "collector", chance: 5.5 },
+		{ text: "LANDOWNER", points: 0, type: "special", special: "landowner", chance: 5.5 },
+
+		{ text: "DEJA VU", points: 100, type: "blue", special: "deja_vu", chance: 10.5 },
+	];
 
     function loadChancesFromLocalStorage() {
         const savedChances = JSON.parse(localStorage.getItem('spinningWheelChances'));
@@ -971,54 +1150,58 @@
         localStorage.setItem('spinningWheelChances', JSON.stringify(chancesToSave));
     }
     
-	// Sound effect for spinning - improved version with error handling
+	// Sound effects engine
 	let audioContext = null;
 	let isAudioInitialized = false;
 
 	function initializeAudio() {
-		if (!audioContext) {
-			try {
-				audioContext = new (window.AudioContext || window.webkitAudioContext)();
-				isAudioInitialized = true;
-			} catch (error) {
-				console.log('Audio not supported');
-				isAudioInitialized = false;
-			}
-		}
+        // Return if already initialized or not supported
+		if (isAudioInitialized || !window.AudioContext && !window.webkitAudioContext) return;
 		
-		// Resume context if it's suspended (browser requirement)
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            isAudioInitialized = true;
+        } catch (error) {
+            console.warn('Audio not supported on this browser.');
+            isAudioInitialized = false;
+        }
+		
+		// Resume context if it's suspended (browser requirement for autoplay)
 		if (audioContext && audioContext.state === 'suspended') {
 			audioContext.resume();
 		}
 	}
 
-	function playTickSound() {
-		if (!isAudioInitialized) {
-			initializeAudio();
-		}
-		
-		if (!audioContext || audioContext.state === 'closed') {
-			return; // Skip if audio isn't available
-		}
+	function playSound(type, ...args) {
+		if (!isAudioInitialized || !audioContext || audioContext.state === 'closed') return;
 		
 		try {
 			const oscillator = audioContext.createOscillator();
 			const gainNode = audioContext.createGain();
-			
 			oscillator.connect(gainNode);
 			gainNode.connect(audioContext.destination);
-			
-			oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-			oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.05);
-			
-			gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-			gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
-			
-			oscillator.start(audioContext.currentTime);
-			oscillator.stop(audioContext.currentTime + 0.05);
+
+			switch (type) {
+				case 'spinTick':
+					oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+					oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.05);
+					gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+					gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+					oscillator.start(audioContext.currentTime);
+					oscillator.stop(audioContext.currentTime + 0.05);
+					break;
+				case 'timerTick':
+                    const [timeLeft] = args;
+                    const frequency = timeLeft <= 5 ? 880 - (timeLeft * 40) : 440;
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+			}
 		} catch (error) {
-			// Silently fail if audio doesn't work
-			console.log('Audio playback failed');
+			console.warn('Audio playback failed silently.', error);
 		}
 	}
 	
@@ -1029,6 +1212,7 @@
             case 'neutral': return 'neutral-option';
             case 'special': return 'special-option';
             case 'jackpot': return 'jackpot-option';
+            case 'blue': return 'blue-option';
             default: return 'neutral-option';
         }
     }
@@ -1120,16 +1304,11 @@
                 teamItem.style.cursor = 'pointer';
                 teamItem.onclick = () => selectTeamForQuestion(index);
             } else {
-                // MODIFICATION: Removed the onclick handler that cycled through players.
-                // This allows the user to click on the expandable player list without
-                // unintentionally changing the "Next" player.
                 teamItem.style.cursor = 'default';
                 teamItem.onclick = null;
             }
 			
-			// Removed the playersInfo section that displayed "Next: Player Name"
 			let playersInfo = '';
-			// No longer showing the next player indicator
 
             let playerListHtml = '';
             if (team.players && team.players.length > 0) {
@@ -1254,8 +1433,17 @@
     }
     
     function spinSlot() {
+        if (lastSpinResult.points === 100 && ['rollback', 'skip_turn', 'high_beams'].includes(lastSpinResult.special)) {
+            document.getElementById('confirmSpinModal').style.display = 'block';
+        } else {
+            proceedWithSpin();
+        }
+    }
+
+    function proceedWithSpin() {
         if (isSpinning) return;
         
+        closeModal('confirmSpinModal');
         isSpinning = true;
         const spinBtn = document.getElementById('spinBtn');
         const slotText = document.getElementById('slotText');
@@ -1274,7 +1462,7 @@
         
         const spinInterval = () => {
             if (spinCount < maxSpins) {
-                playTickSound();
+                playSound('spinTick');
                 const randomOption = slotOptions[Math.floor(Math.random() * slotOptions.length)];
                 slotText.textContent = randomOption.text;
                 slotText.className = `slot-text ${getOptionClass(randomOption)}`;
@@ -1361,7 +1549,7 @@
         }
 
         if(autoSpin) {
-            setTimeout(() => { if (!isSpinning) spinSlot(); }, 2000);
+            setTimeout(() => { if (!isSpinning) proceedWithSpin(); }, 2000);
         }
     }
 
@@ -1467,6 +1655,23 @@
         updateTeamsList();
     }
     
+    function getActionDescription(action) {
+        if (!action) return "No action";
+        switch(action.type) {
+            case 'add': return `Gained ${action.amount} points`;
+            case 'subtract': return `Subtracted ${action.amount} points`;
+            case 'fitty-fitty': return `Fitty-Fitty (was ${action.previousPoints} pts)`;
+            case 'stole_from': return `Stole ${action.amount} from ${action.victim}`;
+            case 'stolen_from': return `Lost ${action.amount} to ${action.stealer}`;
+            case 'collect': return `Collected ${action.amount} points`;
+            case 'drain': return `Drained points from ${action.victim}`;
+            case 'drained': return `Drained of points by ${action.by}`;
+            case 'collected_rent': return `Collected ${action.amount} in rent`;
+            case 'paid_rent': return `Paid ${action.amount} in rent to ${action.to}`;
+            default: return "A previous action";
+        }
+    }
+
     function showRollbackModal() {
         const modal = document.getElementById('rollbackModal');
         const options = document.getElementById('rollbackOptions');
@@ -1476,7 +1681,8 @@
             if (team.lastAction) {
                 const button = document.createElement('button');
                 button.className = 'modal-btn confirm-btn';
-                button.textContent = `Undo ${team.name}'s last action`;
+                const description = getActionDescription(team.lastAction);
+                button.textContent = `Undo ${team.name}'s action: ${description}`;
                 button.onclick = () => executeRollback(index);
                 options.appendChild(button);
             }
@@ -1529,7 +1735,6 @@
                 break;
             case 'collected_rent': // Landowner collected rent from all
                 team.points -= action.amount;
-                // Note: This is best undone by rolling back the teams that *paid* rent.
                 break;
             case 'paid_rent': // Team paid rent to a landowner
                 {
@@ -1589,7 +1794,7 @@
         teams[collectorIndex].lastAction = { type: 'drain', amount: pointsToDrain, victim: teams[victimIndex].name };
 
         closeModal('collectorModal');
-        document.getElementById('result').innerHTML = `😈 ${teams[collectorIndex].name} drained ${pointsToDrain} points from ${teams[victimIndex].name}!`;
+        document.getElementById('result').innerHTML = `😇 ${teams[collectorIndex].name} drained ${pointsToDrain} points from ${teams[victimIndex].name}!`;
         lastSpinResult = { points: 0, text: "None" };
         updateTeamsList();
         updateLastSpinInfo();
@@ -1751,7 +1956,7 @@
         const total = slotOptions.reduce((sum, option) => sum + (option.chance || 0), 0);
         const totalChanceEl = document.getElementById('totalChance');
         totalChanceEl.textContent = total.toFixed(2);
-        const parentEl = totalChanceEl.parentElement;
+        const parentEl = totalChanceEl.parentElement.parentElement;
         if (Math.abs(total - 100) > 0.01) { // Use a small tolerance for floating point math
             parentEl.style.color = '#e74c3c'; // Red
             parentEl.title = 'Total chance should be 100% for accurate probabilities.';
@@ -1788,16 +1993,32 @@
     
     // Initialize the game
     document.addEventListener('DOMContentLoaded', () => {
-        loadChancesFromLocalStorage(); // Load saved chances on startup
+        loadChancesFromLocalStorage(); 
+        
+        const savedTimer = localStorage.getItem('questionTimeLimit');
+        if (savedTimer) {
+            questionTimeLimit = parseInt(savedTimer, 10);
+            document.getElementById('timerDurationSetting').value = questionTimeLimit;
+        }
+
+        const savedTimerEnabled = localStorage.getItem('questionTimerEnabled');
+        if (savedTimerEnabled !== null) {
+            timerEnabled = savedTimerEnabled === 'true';
+            document.getElementById('timerToggle').checked = timerEnabled;
+        }
+
         updateLastSpinInfo();
-        populateAdminControls(); // Set up the admin panel on load
+        populateAdminControls(); 
 
         document.getElementById('resetChancesBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to reset all chances to their default values? This will reload the page.')) {
+            if (confirm('Are you sure you want to reset all chances and settings to their default values? This will reload the page.')) {
                 localStorage.removeItem('spinningWheelChances');
+                localStorage.removeItem('questionTimeLimit');
+                localStorage.removeItem('questionTimerEnabled');
                 location.reload();
             }
         });
+
     });
 	
 	// Question and Player Management
@@ -1805,10 +2026,52 @@
 	let currentQuestionIndex = 0;
 	let showingAnswer = false;
 	let players = [];
-	let teamPlayerIndex = {}; // Track current player index for each team
+	let teamPlayerIndex = {}; 
 	let activeTeamIndex = null;
 	let questionMode = false;
-	let showMultipleChoice = true; // CHANGE 1: Variable for the toggle
+	let showMultipleChoice = true;
+
+    let questionTimerInterval = null;
+    let questionTimeLimit = 25; 
+    let answerRevealed = false;
+    let timerEnabled = true;
+
+    function updateTimerSetting(value) {
+        const newTime = parseInt(value, 10);
+        if (!isNaN(newTime) && newTime >= 5) {
+            questionTimeLimit = newTime;
+            localStorage.setItem('questionTimeLimit', questionTimeLimit);
+        }
+    }
+
+    function updateTimerEnabled(isEnabled) {
+        timerEnabled = isEnabled;
+        localStorage.setItem('questionTimerEnabled', timerEnabled);
+    }
+
+	// ADJUSTMENT 4: New functions for modal-first file browsing
+	function showFormatPopup(type) {
+		document.getElementById(`${type}FormatPopup`).style.display = 'block';
+	}
+
+	function acceptAndBrowse(type) {
+		document.getElementById(`${type}FormatPopup`).style.display = 'none';
+		document.getElementById(`${type}sFile`).click(); // 'questionsFile' or 'playersFile'
+	}
+
+	// ADJUSTMENT 3: New function for paste button
+	function togglePasteSection() {
+		const pasteSection = document.getElementById('pasteSection');
+		const button = event.target;
+		if (pasteSection.style.display === 'none') {
+			pasteSection.style.display = 'block';
+			button.textContent = 'Hide Paste Area';
+		} else {
+			pasteSection.style.display = 'none';
+			button.textContent = 'Paste from Clipboard';
+		}
+	}
+
 
 	function loadQuestions(event) {
 		const file = event.target.files[0];
@@ -1829,22 +2092,12 @@
 		let currentQuestion = null;
 		
 		for (let line of lines) {
-			// Check if this is a question (doesn't start with a), b), c), d))
 			if (!line.match(/^[a-d]\)/i)) {
-				// Save previous question if exists
-				if (currentQuestion) {
-					questions.push(currentQuestion);
-				}
-				// Start new question
-				currentQuestion = {
-					question: line,
-					options: [],
-					correctIndex: -1
-				};
+				if (currentQuestion) questions.push(currentQuestion);
+				currentQuestion = { question: line, options: [], correctIndex: -1 };
 			} else {
-				// This is an option
 				if (currentQuestion) {
-					const isCorrect = line.includes('(Correct)') || line.includes('(correct)');
+					const isCorrect = line.toLowerCase().includes('(correct)');
 					const cleanOption = line.replace(/\(correct\)/gi, '').trim();
 					currentQuestion.options.push(cleanOption);
 					if (isCorrect) {
@@ -1854,10 +2107,7 @@
 			}
 		}
 		
-		// Don't forget the last question
-		if (currentQuestion) {
-			questions.push(currentQuestion);
-		}
+		if (currentQuestion) questions.push(currentQuestion);
 		
 		if (questions.length > 0) {
 			currentQuestionIndex = 0;
@@ -1895,34 +2145,41 @@
 		assignPlayersToTeams();
 	}
 
+	function loadQuestionsFromTextArea() {
+		const text = document.getElementById('questionPasteArea').value;
+		if (text.trim()) {
+			parseQuestions(text);
+			alert(questions.length + ' questions loaded successfully!');
+		} else {
+			alert('The questions text area is empty!');
+		}
+	}
+
+	function loadPlayersFromTextArea() {
+		const text = document.getElementById('playerPasteArea').value;
+		if (text.trim()) {
+			parsePlayers(text);
+			alert(players.length + ' players loaded and assigned to teams!');
+		} else {
+			alert('The players text area is empty!');
+		}
+	}
+
+
 	function assignPlayersToTeams() {
 		if (teams.length === 0 || players.length === 0) return;
 		
-		// Clear existing team assignments
-		teams.forEach(team => {
-			team.players = [];
-		});
+		teams.forEach(team => { team.players = []; });
 		
-		// CHANGE 2: Shuffle players array for random assignment
-		const shuffledPlayers = [...players];
-		for (let i = shuffledPlayers.length - 1; i > 0; i--) {
-			const j = Math.floor(Math.random() * (i + 1));
-			[shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
-		}
+		const shuffledPlayers = [...players].sort(() => 0.5 - Math.random());
 		
-		// Distribute shuffled players evenly among teams
 		shuffledPlayers.forEach((player, index) => {
 			const teamIndex = index % teams.length;
 			teams[teamIndex].players.push(player);
 		});
 		
-		// Initialize player indices for each team
 		teamPlayerIndex = {};
-		teams.forEach((team, index) => {
-			if (team.players && team.players.length > 0) {
-				teamPlayerIndex[index] = 0; // Start at the first player
-			}
-		});
+		teams.forEach((_, index) => { teamPlayerIndex[index] = 0; });
 		
 		updateTeamsList();
 	}
@@ -1938,10 +2195,13 @@
 			return;
 		}
 		
+        initializeAudio();
 		questionMode = true;
 		showingAnswer = false;
+        answerRevealed = false;
 		displayFullscreenQuestion();
 		document.getElementById('fullscreenQuestion').style.display = 'flex';
+        startQuestionTimer();
 	}
 
 	function displayFullscreenQuestion() {
@@ -1949,6 +2209,7 @@
 		
 		const question = questions[currentQuestionIndex];
 		const questionContent = document.getElementById('fullscreenQuestionContent');
+        const optionChars = ['A) ', 'B) ', 'C) ', 'D) '];
 		
 		let html = `
 			<div class="fullscreen-question-text">
@@ -1962,36 +2223,29 @@
         if (showMultipleChoice && !highBeamsActive) {
             question.options.forEach((option, index) => {
                 const isCorrect = index === question.correctIndex;
-                const showCorrect = showingAnswer && isCorrect;
+                let optionClass = '';
+                if (answerRevealed) {
+                    optionClass = isCorrect ? 'correct no-click' : 'no-click';
+                }
+
                 html += `
-                    <div class="fullscreen-option ${showCorrect ? 'correct' : ''}">
-                        ${option}
+                    <div class="fullscreen-option ${optionClass}" id="option-${index}" onclick="checkAnswer(${index})">
+                        <strong>${optionChars[index] || ''}</strong>${option.substring(option.indexOf(')') + 1)}
                     </div>
                 `;
             });
         } else {
-            // If options are hidden, only show the correct answer when revealed
-            if (showingAnswer && question.correctIndex !== -1) {
+             if (answerRevealed && question.correctIndex !== -1) {
                 const correctOptionText = question.options[question.correctIndex];
-                html += `
-                    <div class="fullscreen-option correct">
-                        ${correctOptionText}
-                    </div>
-                `;
+                html += `<div class="fullscreen-option correct no-click">${correctOptionText}</div>`;
             }
         }
 		
 		questionContent.innerHTML = html;
 		
-		// Update button text
 		const nextBtn = document.getElementById('fullscreenNextBtn');
-		if (showingAnswer) {
-			nextBtn.textContent = currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Questions';
-		} else {
-			nextBtn.textContent = 'Show Answer';
-		}
+		nextBtn.textContent = answerRevealed ? (currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Questions') : 'Show Answer';
 		
-		// Show current player if active team is selected
 		const playerDisplay = document.getElementById('fullscreenCurrentPlayer');
 		const playerName = document.getElementById('fullscreenPlayerName');
 		if (activeTeamIndex !== null && teams[activeTeamIndex] && teams[activeTeamIndex].players.length > 0) {
@@ -2004,33 +2258,86 @@
 		}
 	}
 
-	function nextQuestionStep() {
-		if (!showingAnswer) {
-			// Show the answer
-			showingAnswer = true;
-			displayFullscreenQuestion();
-            if (highBeamsActive) {
-                highBeamsActive = false; // Turn off high beams after it has been used
-            }
-		} else {
-            // Add the just-finished question to our covered list
-            if (questions[currentQuestionIndex]) {
-                 coveredQuestions.push(questions[currentQuestionIndex]);
-            }
+    function startQuestionTimer() {
+        stopQuestionTimer(); 
+        const timerEl = document.getElementById('questionTimer');
+        
+        if (!timerEnabled) {
+            timerEl.style.display = 'none';
+            return;
+        }
+        timerEl.style.display = 'block';
+        let timeLeft = questionTimeLimit;
 
-			// Move to next question or finish
+        timerEl.textContent = timeLeft;
+        timerEl.classList.remove('warning');
+
+        questionTimerInterval = setInterval(() => {
+            timeLeft--;
+            playSound('timerTick', timeLeft);
+            timerEl.textContent = timeLeft;
+            timerEl.classList.toggle('warning', timeLeft <= 5);
+
+            if (timeLeft <= 0) {
+                revealAnswer();
+            }
+        }, 1000);
+    }
+
+    function stopQuestionTimer() {
+        clearInterval(questionTimerInterval);
+        questionTimerInterval = null;
+    }
+    
+    function revealAnswer() {
+        if (answerRevealed) return; 
+        answerRevealed = true;
+        stopQuestionTimer();
+
+        const wasHighBeams = highBeamsActive;
+        if(highBeamsActive) highBeamsActive = false;
+
+        const question = questions[currentQuestionIndex];
+        const correctOptionEl = document.getElementById(`option-${question.correctIndex}`);
+
+        if (correctOptionEl) {
+            correctOptionEl.classList.add('correct');
+            document.querySelectorAll('.fullscreen-option').forEach(opt => opt.classList.add('no-click'));
+        } else if (wasHighBeams || !showMultipleChoice) {
+            displayFullscreenQuestion();
+        }
+        
+        document.getElementById('fullscreenNextBtn').textContent = currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Questions';
+    }
+
+    function checkAnswer(selectedIndex) {
+        if (answerRevealed) return;
+
+        const question = questions[currentQuestionIndex];
+        const clickedOptionEl = document.getElementById(`option-${selectedIndex}`);
+
+        if (selectedIndex !== question.correctIndex) {
+            if(clickedOptionEl) clickedOptionEl.classList.add('incorrect');
+        }
+        revealAnswer();
+    }
+
+
+	function nextQuestionStep() {
+		if (!answerRevealed) {
+			revealAnswer();
+		} else {
+            if (questions[currentQuestionIndex]) coveredQuestions.push(questions[currentQuestionIndex]);
+
 			if (currentQuestionIndex < questions.length - 1) {
 				currentQuestionIndex++;
 				showingAnswer = false;
-				setActiveTeam(null); // Clear active team for next question
-				displayFullscreenQuestion();
-				updateQuestionStatus();
+				setActiveTeam(null);
+				startNextQuestion(); 
 			} else {
-				// Questions finished
 				questionMode = false;
 				closeFullscreenQuestion();
 				alert('All questions completed! Great job everyone!');
-				// Reset to first question for potential replay
 				currentQuestionIndex = 0;
 				updateQuestionStatus();
 			}
@@ -2038,6 +2345,7 @@
 	}
 
 	function closeFullscreenQuestion() {
+        stopQuestionTimer();
 		document.getElementById('fullscreenQuestion').style.display = 'none';
 		questionMode = false;
 		setActiveTeam(null);
@@ -2045,27 +2353,20 @@
 	}
 
 	function selectTeamForQuestion(teamIndex) {
-		if (!questionMode) return;
+		if (!questionMode || answerRevealed) return;
 		
 		if (!teams[teamIndex].players || teams[teamIndex].players.length === 0) {
 			alert('This team has no players assigned!');
 			return;
 		}
 		
-		// First, set the active team and display who is answering NOW
 		setActiveTeam(teamIndex);
 		displayFullscreenQuestion(); 
 		
-		// CHANGE 1: Now that the current player is selected, cycle to the next one for the future
 		if (teams[teamIndex].players.length > 0) {
-			// Ensure index is initialized before incrementing
-			if (typeof teamPlayerIndex[teamIndex] !== 'number') {
-				teamPlayerIndex[teamIndex] = 0;
-			}
+			if (typeof teamPlayerIndex[teamIndex] !== 'number') teamPlayerIndex[teamIndex] = 0;
 			teamPlayerIndex[teamIndex] = (teamPlayerIndex[teamIndex] + 1) % teams[teamIndex].players.length;
 		}
-
-		// Update the main list to show the new "Next" player
 		updateTeamsList();
 	}
 
@@ -2074,24 +2375,16 @@
 		updateTeamsList();
 	}
 
-	// Override original addTeam and removeTeam to handle player reassignment
 	const originalAddTeam = addTeam;
 	addTeam = function() {
 		originalAddTeam();
-		if (players.length > 0) {
-			assignPlayersToTeams();
-		}
+		if (players.length > 0) assignPlayersToTeams();
 	};
 
 	const originalRemoveTeam = removeTeam;
 	removeTeam = function(index) {
-        // Find the team name before removing it to correctly reassign players
-        const removedTeamName = teams[index].name;
 		originalRemoveTeam(index);
-		if (players.length > 0) {
-			assignPlayersToTeams();
-		}
-		// Clear active team if it was the removed team
+		if (players.length > 0) assignPlayersToTeams();
 		if (activeTeamIndex === index) {
 			setActiveTeam(null);
 		} else if (activeTeamIndex > index) {
@@ -2099,7 +2392,6 @@
 		}
 	};
 	
-    // CHANGE 1: Add event listener for the new toggle
     document.getElementById('toggleOptions').addEventListener('change', function() {
         showMultipleChoice = this.checked;
     });
