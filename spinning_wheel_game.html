@@ -41,17 +41,6 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
         
-        .admin-toggle-container {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #4a5568;
-        }
-
-        .admin-toggle-container label {
-            font-weight: bold;
-            margin-right: 10px;
-        }
-        
         .game-section {
             display: flex;
             flex-direction: column;
@@ -212,6 +201,34 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: 0 2px 10px rgba(149, 165, 166, 0.4);
+        }
+
+        .clear-button {
+            background: linear-gradient(45deg, #fdfdfd, #e9ecef);
+            color: #4a5568;
+            border: none;
+            padding: 20px 50px;
+            border-radius: 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .clear-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        .clear-button:active {
+            transform: translateY(-1px) scale(1.02);
         }
         
         .teams-section {
@@ -499,6 +516,7 @@
 			gap: 15px;
 			margin-bottom: 20px;
 			flex-wrap: wrap;
+			justify-content: center;
 		}
 
 		.file-input-wrapper {
@@ -856,6 +874,27 @@
             white-space: pre-wrap;
             color: #333;
         }
+
+        /* CHANGE 2: New styles for Admin Mode button */
+        .admin-bottom-container {
+            margin-top: 40px;
+            text-align: center;
+        }
+        .admin-mode-button {
+            background: linear-gradient(45deg, #6c757d, #5a6268);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        .admin-mode-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -863,41 +902,12 @@
         <h1>🎡 Spinning Wheel Team Game</h1>
 
         <div class="result-section">
-            <div class="result" id="result">Spin the wheel to get started!</div>
             <div class="current-spin-info" id="currentSpinInfo">
                 Last spin: <strong id="lastSpinText">None</strong> 
                 | Points available: <strong id="lastSpinPoints">0</strong>
                 | <span id="doubleStatus"></span>
             </div>
-        </div>
-
-        <div class="admin-toggle-container">
-            <label for="adminMode">Admin Mode:</label>
-            <input type="checkbox" id="adminMode" onchange="toggleAdminPanel()">
-        </div>
-    
-        <div id="adminPanel" style="display: none; background: #e9ecef; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 2px solid #dee2e6;">
-            <h3 style="text-align: center; margin-bottom: 15px; color: #495057;">Admin Controls & Settings</h3>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; flex-wrap: wrap; gap: 15px;">
-                <button id="resetChancesBtn" class="add-btn" style="background: #6c757d;">Reset to Defaults</button>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <label for="timerDurationSetting">Timer (s):</label>
-                    <input type="number" id="timerDurationSetting" value="25" min="5" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid #dee2e6;" onchange="updateTimerSetting(this.value)">
-                </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                     <label for="timerToggle">Enable Timer</label>
-                    <input type="checkbox" id="timerToggle" onchange="updateTimerEnabled(this.checked)" checked>
-                </div>
-				<!-- ADJUSTMENT 1: Moved checkbox here -->
-				<div style="display: flex; align-items: center; gap: 5px;">
-					<label for="toggleOptions">👁️ Multiple-Choice</label>
-					<input type="checkbox" id="toggleOptions" checked>
-				</div>
-                <div>Total Chance: <span id="totalChance">100</span>%</div>
-            </div>
-            <div id="adminControlsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                <!-- Controls will be populated by JS -->
-            </div>
+            <div class="result" id="result">Spin the wheel to get started!</div>
         </div>
 		
         <div class="game-section">
@@ -909,12 +919,14 @@
                     </div>
                 </div>
                 <div class="spin-controls">
-				<button class="spin-button" id="spinBtn" onclick="spinSlot()">
-					🎡 SPIN THE WHEEL!
-				</button>
-				<button class="next-question-btn" id="nextQuestionBtn" onclick="startNextQuestion()" style="display: none;">
-					📝 NEXT QUESTION
-				</button>
+                    <button class="clear-button" id="clearBtn" onclick="clearPowerup()">Clear</button>
+                    <button class="spin-button" id="spinBtn" onclick="spinSlot()">
+                        🎡 SPIN THE WHEEL!
+                    </button>
+                    <button class="next-question-btn" id="nextQuestionBtn" onclick="startNextQuestion()" style="display: none;">
+                        📝 NEXT QUESTION
+                    </button>
+                </div>
             </div>
             
             <div class="teams-section" style="margin-top: 30px;">
@@ -980,6 +992,36 @@
 				No questions loaded
 			</div>
 		</div>
+
+        <!-- CHANGE 2: Admin Controls moved to the bottom -->
+        <div class="admin-bottom-container">
+            <button id="adminModeBtn" class="admin-mode-button" onclick="toggleAdminPanel()">
+               Admin Controls
+           </button>
+        </div>
+        <div id="adminPanel" style="display: none; background: #e9ecef; padding: 20px; border-radius: 15px; margin-top: 15px; margin-bottom: 20px; border: 2px solid #dee2e6;">
+            <h3 style="text-align: center; margin-bottom: 15px; color: #495057;">Admin Controls & Settings</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; flex-wrap: wrap; gap: 15px;">
+                <button id="resetChancesBtn" class="add-btn" style="background: #6c757d;">Reset to Defaults</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <label for="timerDurationSetting">Timer (s):</label>
+                    <input type="number" id="timerDurationSetting" value="25" min="5" style="width: 70px; padding: 8px; border-radius: 6px; border: 1px solid #dee2e6;" onchange="updateTimerSetting(this.value)">
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                     <label for="timerToggle">Enable Timer</label>
+                    <input type="checkbox" id="timerToggle" onchange="updateTimerEnabled(this.checked)" checked>
+                </div>
+				<!-- ADJUSTMENT 1: Moved checkbox here -->
+				<div style="display: flex; align-items: center; gap: 5px;">
+					<label for="toggleOptions">👁️ Multiple-Choice</label>
+					<input type="checkbox" id="toggleOptions" checked>
+				</div>
+                <div>Total Chance: <span id="totalChance">100</span>%</div>
+            </div>
+            <div id="adminControlsContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <!-- Controls will be populated by JS -->
+            </div>
+        </div>
         
         <!-- Modals -->
         <div id="fittyFittyModal" class="modal">
@@ -1049,7 +1091,8 @@
         <div id="confirmSpinModal" class="modal">
             <div class="modal-content">
                 <h3 style="color: #f39c12;">Wait a second!</h3>
-                <p style="margin: 20px 0; font-size: 1.1rem;">You still have 100 points available to award from the last spin. Are you sure you want to spin again and forfeit these points?</p>
+                <!-- CHANGE 1: Hardcoded point value replaced with a dynamic element -->
+                <p style="margin: 20px 0; font-size: 1.1rem;">You still have <strong id="unawardedPoints"></strong> points available to award from the last spin. Are you sure you want to spin again and forfeit these points?</p>
                 <div class="modal-options">
                     <button class="modal-btn danger-btn" onclick="proceedWithSpin()">Yes, Forfeit Points & Spin</button>
                     <button class="modal-btn cancel-btn" onclick="closeModal('confirmSpinModal')">No, I'll Award The Points</button>
@@ -1433,7 +1476,9 @@ Peter Jones</pre>
     }
     
     function spinSlot() {
-        if (lastSpinResult.points === 100 && ['rollback', 'skip_turn', 'high_beams'].includes(lastSpinResult.special)) {
+        // CHANGE 1: Reminder triggers for ANY unawarded points
+        if (lastSpinResult.points !== 0) {
+            document.getElementById('unawardedPoints').textContent = lastSpinResult.points;
             document.getElementById('confirmSpinModal').style.display = 'block';
         } else {
             proceedWithSpin();
@@ -1487,6 +1532,15 @@ Peter Jones</pre>
         };
         
         spinInterval();
+    }
+
+    function clearPowerup() {
+        isDoubleActive = false;
+        highBeamsActive = false;
+        lastSpinResult = { points: 0, text: "None" };
+        updateLastSpinInfo();
+        updateTeamsList();
+        document.getElementById('result').innerHTML = 'Power-ups and available points have been cleared.';
     }
     
     function handleSpecialResult(result) {
@@ -1899,10 +1953,14 @@ Peter Jones</pre>
     }
 
     // --- ADMIN MODE LOGIC ---
+    // CHANGE 2: Simplified function to just toggle the panel's display
     function toggleAdminPanel() {
         const adminPanel = document.getElementById('adminPanel');
-        const adminModeCheckbox = document.getElementById('adminMode');
-        adminPanel.style.display = adminModeCheckbox.checked ? 'block' : 'none';
+        if (adminPanel.style.display === 'block') {
+            adminPanel.style.display = 'none';
+        } else {
+            adminPanel.style.display = 'block';
+        }
     }
 
     function populateAdminControls() {
