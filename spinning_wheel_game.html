@@ -592,13 +592,13 @@
 			border-radius: 20px;
 			padding: 40px;
 			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-			max-width: 1100px; 
+			max-width: 1250px; /* Changed from 1100px */
 			width: 100%;
-			max-height: 90vh;
+			max-height: 100vh; /* Changed from 90vh */
 			overflow-y: auto;
-            position: relative; 
-            text-align: center; /* Center timer and question */
-			overflow-x: hidden; /* ADJUSTMENT 2: Prevent timer pulse from creating a scrollbar */
+			position: relative;
+			text-align: center;
+			overflow-x: hidden;
 		}
 
 		.fullscreen-question-text {
@@ -1154,29 +1154,29 @@ Peter Jones</pre>
     let coveredQuestions = [];
     
 	const slotOptions = [
-		{ text: "100", points: 100, type: "good", chance: 6.0 },
-		{ text: "200", points: 200, type: "good", chance: 6.0 },
-		{ text: "300", points: 300, type: "good", chance: 6.0 },
-		{ text: "400", points: 400, type: "good", chance: 6.0 },
-		{ text: "500", points: 500, type: "jackpot", chance: 6.0 },
+		{ text: "100", points: 100, type: "good", chance: 8.0 },
+		{ text: "200", points: 200, type: "good", chance: 8.0 },
+		{ text: "300", points: 300, type: "good", chance: 8.0 },
+		{ text: "400", points: 400, type: "good", chance: 7.0 },
+		{ text: "500", points: 500, type: "jackpot", chance: 7.0 },
 
-		{ text: "LOSE 100", points: -100, type: "bad", chance: 4.0 },
-		{ text: "LOSE 200", points: -200, type: "bad", chance: 4.0 },
+		{ text: "LOSE 100", points: -100, type: "bad", chance: 3.0 },
+		{ text: "LOSE 200", points: -200, type: "bad", chance: 3.0 },
 
-		{ text: "SPIN AGAIN", points: 0, type: "neutral", special: "spin_again", chance: 2 },
-		{ text: "LOSE TURN", points: 0, type: "bad", special: "lose_turn", chance: 4.0 },
-		{ text: "FITTY-FITTY", points: 0, type: "bad", special: "fitty-fitty", chance: 3.5 },
+		{ text: "SPIN AGAIN", points: 0, type: "neutral", special: "spin_again", chance: 1.5 },
+		{ text: "LOSE TURN", points: 0, type: "bad", special: "lose_turn", chance: 2.5 },
+		{ text: "FITTY-FITTY", points: 0, type: "bad", special: "fitty-fitty", chance: 2.0 },
 
 		{ text: "DOUBLE", points: 0, type: "special", special: "double", chance: 5.0 },
 		{ text: "STEAL", points: 0, type: "special", special: "steal", chance: 5.5 },
 		{ text: "MYSTERY", points: 0, type: "special", special: "mystery", chance: 5.5 },
-		{ text: "ROLLBACK", points: 100, type: "blue", special: "rollback", chance: 5.0 },
+		{ text: "ROLLBACK", points: 100, type: "blue", special: "rollback", chance: 5.5 },
 		{ text: "SKIP", points: 100, type: "blue", special: "skip_turn", chance: 5.0 },
 		{ text: "HIGH-BEAMS", points: 100, type: "blue", special: "high_beams", chance: 5.0 },
 		{ text: "COLLECTOR", points: 0, type: "special", special: "collector", chance: 5.5 },
 		{ text: "LANDOWNER", points: 0, type: "special", special: "landowner", chance: 5.5 },
 
-		{ text: "DEJA VU", points: 100, type: "blue", special: "deja_vu", chance: 10.5 },
+		{ text: "DEJA VU", points: 100, type: "blue", special: "deja_vu", chance: 7.5 },
 	];
 
     function loadChancesFromLocalStorage() {
@@ -1276,12 +1276,10 @@ Peter Jones</pre>
     }
     
     function subtractPoints(index) {
-        if (teams[index].points > 0) {
-            const pointsToSubtract = Math.min(teams[index].points, 50);
-            teams[index].lastAction = { type: 'subtract', amount: pointsToSubtract };
-            teams[index].points -= pointsToSubtract;
-            updateTeamsList();
-        }
+        const pointsToSubtract = 50;
+        teams[index].lastAction = { type: 'subtract', amount: pointsToSubtract };
+        teams[index].points -= pointsToSubtract;
+        updateTeamsList();
     }
     
     function addPointsToTeam(index) {
@@ -1457,23 +1455,28 @@ Peter Jones</pre>
 
 
     function getWeightedRandomOption() {
-        const totalWeight = slotOptions.reduce((sum, option) => sum + (option.chance || 0), 0);
-        if (totalWeight <= 0) {
-            return slotOptions[Math.floor(Math.random() * slotOptions.length)];
-        }
-        
-        let random = Math.random() * totalWeight;
-        
-        for (const option of slotOptions) {
-            if (option.chance > 0) {
-                random -= option.chance;
-                if (random <= 0) {
-                    return option;
-                }
-            }
-        }
-        return slotOptions[slotOptions.length - 1];
-    }
+		// Convert decimal weights to integers by multiplying by 10
+		const integerOptions = slotOptions.map(option => ({
+			...option,
+			intChance: Math.round((option.chance || 0) * 10)
+		})).filter(option => option.intChance > 0);
+		
+		if (integerOptions.length === 0) {
+			return slotOptions[Math.floor(Math.random() * slotOptions.length)];
+		}
+
+		const totalWeight = integerOptions.reduce((sum, option) => sum + option.intChance, 0);
+		let random = Math.floor(Math.random() * totalWeight);
+
+		for (const option of integerOptions) {
+			random -= option.intChance;
+			if (random < 0) {
+				return option;
+			}
+		}
+
+		return integerOptions[integerOptions.length - 1];
+	}
     
     function spinSlot() {
         // CHANGE 1: Reminder triggers for ANY unawarded points
@@ -2223,6 +2226,21 @@ Peter Jones</pre>
 		}
 	}
 
+	// Temporary testing function - remove after confirming it works
+	function testWeightedRandom(iterations = 1000) {
+		let testResults = {};
+		for (let i = 0; i < iterations; i++) {
+			const result = getWeightedRandomOption();
+			testResults[result.text] = (testResults[result.text] || 0) + 1;
+		}
+		console.table(testResults);
+		
+		// Show percentages
+		Object.keys(testResults).forEach(key => {
+			const percentage = (testResults[key] / iterations * 100).toFixed(1);
+			console.log(`${key}: ${percentage}%`);
+		});
+	}
 
 	function assignPlayersToTeams() {
 		if (teams.length === 0 || players.length === 0) return;
