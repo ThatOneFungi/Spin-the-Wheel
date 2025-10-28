@@ -1011,6 +1011,10 @@
                      <label for="timerToggle">Enable Timer</label>
                     <input type="checkbox" id="timerToggle" onchange="updateTimerEnabled(this.checked)" checked>
                 </div>
+				<div style="display: flex; align-items: center; gap: 5px;">
+					<label for="threeAttemptMode">3-Attempt Mode</label>
+					<input type="checkbox" id="threeAttemptMode">
+				</div>
 				<!-- ADJUSTMENT 1: Moved checkbox here -->
 				<div style="display: flex; align-items: center; gap: 5px;">
 					<label for="toggleOptions">👁️ Multiple-Choice</label>
@@ -2091,6 +2095,7 @@ Peter Jones</pre>
 	let activeTeamIndex = null;
 	let questionMode = false;
 	let showMultipleChoice = true;
+	let questionAttempts = 0;
 
     let questionTimerInterval = null;
     let questionTimeLimit = 25; 
@@ -2271,13 +2276,14 @@ Peter Jones</pre>
 			return;
 		}
 		
-        initializeAudio();
+		initializeAudio();
+		questionAttempts = 0; // ADD THIS LINE TO RESET ATTEMPTS
 		questionMode = true;
 		showingAnswer = false;
-        answerRevealed = false;
+		answerRevealed = false;
 		displayFullscreenQuestion();
 		document.getElementById('fullscreenQuestion').style.display = 'flex';
-        startQuestionTimer();
+		startQuestionTimer();
 	}
 
 	function displayFullscreenQuestion() {
@@ -2387,16 +2393,42 @@ Peter Jones</pre>
     }
 
     function checkAnswer(selectedIndex) {
-        if (answerRevealed) return;
+		if (answerRevealed) return;
 
-        const question = questions[currentQuestionIndex];
-        const clickedOptionEl = document.getElementById(`option-${selectedIndex}`);
+		const isThreeAttemptMode = document.getElementById('threeAttemptMode').checked;
+		const question = questions[currentQuestionIndex];
+		const clickedOptionEl = document.getElementById(`option-${selectedIndex}`);
 
-        if (selectedIndex !== question.correctIndex) {
-            if(clickedOptionEl) clickedOptionEl.classList.add('incorrect');
-        }
-        revealAnswer();
-    }
+		if (!isThreeAttemptMode) {
+			// Original behavior if mode is off
+			if (selectedIndex !== question.correctIndex) {
+				if(clickedOptionEl) clickedOptionEl.classList.add('incorrect');
+			}
+			revealAnswer();
+			return;
+		}
+
+		// New 3-attempt mode behavior
+		questionAttempts++;
+		const isCorrect = selectedIndex === question.correctIndex;
+
+		if (isCorrect) {
+			// On correct answer, always reveal
+			revealAnswer();
+		} else {
+			// On incorrect answer
+			if (clickedOptionEl) {
+				clickedOptionEl.classList.add('incorrect');
+				clickedOptionEl.classList.add('no-click'); // Prevent re-clicking the same wrong answer
+			}
+			
+			if (questionAttempts >= 3) {
+				// After 3 incorrect attempts, reveal the answer
+				revealAnswer();
+			}
+			// If < 3 incorrect attempts, do nothing else. Wait for next click.
+		}
+	}
 
 
 	function nextQuestionStep() {
